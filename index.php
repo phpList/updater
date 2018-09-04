@@ -1,7 +1,7 @@
 <?php
 /**
  * Updater for phpList 3
- * @author Xheni Myrtaj
+ * @author Xheni Myrtaj <xheni@phplist.com>
  *
  */
 class updater
