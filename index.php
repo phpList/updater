@@ -34,7 +34,7 @@ class updater
         $versionString = isset($response['versionstring']) ? $response['versionstring'] : '';
         if ($version !== '' && $version !== $this->currentVersion) {
             $this->availableUpdate = true;
-            $updateText = 'Update to the' . htmlentities($versionString) . ' is available. <br />The following file will be downloaded: <code ">' . $response['link'] . '</code>';
+            $updateText = 'Update to the' . htmlentities($versionString) . ' is available. <br />The following file will be downloaded: <code ">' . $response['url'] . '</code>';
         } else {
             $updateText = 'There is no update available.';
         }
@@ -54,7 +54,7 @@ class updater
     private function getResponseFromServer() {
         $curl = curl_init();
         /**
-         * @TODO 
+         * @TODO
          */
 
         $response = curl_exec($curl);
