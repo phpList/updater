@@ -11,7 +11,7 @@ class updater
     /** @var string */
     private $currentVersion = 'unknown';
     /** @var string */
-    private $url = "http://10.211.55.4/phplisttest";
+    private $url;
 
 
     /**
