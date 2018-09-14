@@ -11,7 +11,7 @@ class updater
     /** @var string */
     private $currentVersion = 'unknown';
     /** @var string */
-    private $url = "http://10.211.55.4/phplisttest";
+    private $url;
 
 
     /**
@@ -29,37 +29,58 @@ class updater
      */
     function checkIfThereIsAnUpdate()
     {
-        $response = $this->getResponseFromServer();
-        $version = isset($response['version']) ? $response['version'] : '';
-        $versionString = isset($response['versionstring']) ? $response['versionstring'] : '';
+        $serverResponse = $this->checkResponseFromServer();
+        $version = isset($serverResponse['phplistversion']) ? $serverResponse['phplistversion'] : '';
+        $versionString = isset($serverResponse['versionstring']) ? $serverResponse['versionstring'] : '';
         if ($version !== '' && $version !== $this->currentVersion) {
             $this->availableUpdate = true;
-            $updateText = 'Update to the' . htmlentities($versionString) . ' is available. <br />The following file will be downloaded: <code ">' . $response['url'] . '</code>';
+            $updateMessage = 'Update to the' . htmlentities($versionString) . ' is available. <br />The following file will be downloaded: <code ">' . $serverResponse['url'] . '</code>';
         } else {
-            $updateText = 'There is no update available.';
+            $updateMessage = 'There is no update available.';
         }
-        if ($this->availableUpdate && isset($response['autoupdater']) && !($response['autoupdater'] === 1 || $response['autoupdater'] === '1')) {
+        if ($this->availableUpdate && isset($serverResponse['autoupdater']) && !($serverResponse['autoupdater'] === 1 || $serverResponse['autoupdater'] === '1')) {
             $this->availableUpdate = false;
-            $updateText .= '<br />The one click updater is disabled for this update.';
+            $updateMessage .= '<br />The one click updater is disabled for this update.';
         }
 
-        return $updateText;
+        return $updateMessage;
 
     }
 
     /**
+     *
+     *
      * @return array
      * @throws \Exception
      */
-    private function getResponseFromServer() {
-        $curl = curl_init();
-        /**
-         * @TODO
-         */
+    private function checkResponseFromServer() {
 
-        $response = curl_exec($curl);
+        $serverUrl = "http://10.211.55.4/phplisttest";
 
-        return $response;
+        // create a new cURL resource
+        $ch = curl_init();
+        // set URL and other appropriate options
+        curl_setopt($ch, CURLOPT_URL, $serverUrl);
+        curl_setopt($ch, CURLOPT_HEADER, 0);
+
+        // grab URL
+        $responseFromServer= curl_exec($ch);
+
+        if($responseFromServer === false) {
+            throw new \Exception(curl_error($ch));
+        }
+        // close cURL resource, and free up system resources
+
+        curl_close($ch);
+        //Encode the response to json
+        $jsonEncoded = json_encode($responseFromServer);
+
+        //Decode the response
+        $jsonDecoded= json_decode($jsonEncoded,true);
+
+
+
+        return $jsonDecoded;
     }
 
 
