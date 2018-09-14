@@ -1,16 +1,86 @@
 <?php
 /**
- * Updater for phpList 3
+ * One click updater for phpList 3
  * @author Xheni Myrtaj <xheni@phplist.com>
  *
  */
 class updater
 {
+    /** @var bool */
+    private $availableUpdate = false;
+    /** @var string */
+    private $currentVersion = 'unknown';
+    /** @var string */
+    private $url;
 
 
+    /**
+     * Returns current version or "unknown".
+     *
+     * @return string
+     */
+    public function getCurrentVersion() {
+        return $this->currentVersion;
+    }
+
+    /**
+     * @return string
+     * @throws \Exception
+     */
     function checkIfThereIsAnUpdate()
     {
+        $serverResponse = $this->checkResponseFromServer();
+        $version = isset($serverResponse['phplistversion']) ? $serverResponse['phplistversion'] : '';
+        $versionString = isset($serverResponse['versionstring']) ? $serverResponse['versionstring'] : '';
+        if ($version !== '' && $version !== $this->currentVersion) {
+            $this->availableUpdate = true;
+            $updateMessage = 'Update to the' . htmlentities($versionString) . ' is available. <br />The following file will be downloaded: <code ">' . $serverResponse['url'] . '</code>';
+        } else {
+            $updateMessage = 'There is no update available.';
+        }
+        if ($this->availableUpdate && isset($serverResponse['autoupdater']) && !($serverResponse['autoupdater'] === 1 || $serverResponse['autoupdater'] === '1')) {
+            $this->availableUpdate = false;
+            $updateMessage .= '<br />The one click updater is disabled for this update.';
+        }
 
+        return $updateMessage;
+
+    }
+
+    /**
+     *
+     *
+     * @return array
+     * @throws \Exception
+     */
+    private function checkResponseFromServer() {
+
+        $serverUrl = "http://10.211.55.4/phplisttest";
+
+        // create a new cURL resource
+        $ch = curl_init();
+        // set URL and other appropriate options
+        curl_setopt($ch, CURLOPT_URL, $serverUrl);
+        curl_setopt($ch, CURLOPT_HEADER, 0);
+
+        // grab URL
+        $responseFromServer= curl_exec($ch);
+
+        if($responseFromServer === false) {
+            throw new \Exception(curl_error($ch));
+        }
+        // close cURL resource, and free up system resources
+
+        curl_close($ch);
+        //Encode the response to json
+        $jsonEncoded = json_encode($responseFromServer);
+
+        //Decode the response
+        $jsonDecoded= json_decode($jsonEncoded,true);
+
+
+
+        return $jsonDecoded;
     }
 
 
@@ -64,12 +134,13 @@ class updater
 
 
     }
-    function downloadUpdate($url,$zipFile )
+    function downloadUpdate($zipFile )
     {
-        $this->$url = "http://10.211.55.4/phplisttest";
+        /** @var string $url */
+        $this->url = "http://10.211.55.4/phplisttest";
+        /** @var ZipArchive $zipFile */
         $this->$zipFile = "/../../phpList.zip"; // Local Zip File Path
-        $zipResource = fopen($zipFile, "w");
-// Get The Zip File From Server
+        $zipResource = fopen($zipFile, "w"); // Get The Zip File From Server
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_FAILONERROR, true);
