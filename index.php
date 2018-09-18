@@ -173,7 +173,7 @@ class updater
         curl_close($ch);
         /* Open the Zip file */
         $zip = new ZipArchive;
-        $extractPath = "phplist";
+        $extractPath = getcwd();
         if($zip->open($zipFile) != "true"){
             echo "Error :- Unable to open the Zip File";
         }
