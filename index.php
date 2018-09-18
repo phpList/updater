@@ -138,11 +138,15 @@ class updater
     /**
      * @return bool
      */
-    function checkUserPermissions()
-    {
+    function checkUserPermission()
+    { $permission = true;
 
-        return true;
+        if (!$_SESSION['logindetails']['superuser']) {
+           echo s("Sorry, you don't have permission to update phpList");
+            $permission = false;
 
+        }
+        return $permission;
     }
     function downloadUpdate($zipFile )
     {
