@@ -134,6 +134,16 @@ class updater
 
 
     }
+
+    /**
+     * @return bool
+     */
+    function checkUserPermissions()
+    {
+
+        return true;
+
+    }
     function downloadUpdate($zipFile )
     {
         /** @var string $url */
