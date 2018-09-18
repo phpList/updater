@@ -4,6 +4,7 @@
  * @author Xheni Myrtaj <xheni@phplist.com>
  *
  */
+
 class updater
 {
     /** @var bool */
@@ -19,7 +20,8 @@ class updater
      *
      * @return string
      */
-    public function getCurrentVersion() {
+    public function getCurrentVersion()
+    {
         return $this->currentVersion;
     }
 
@@ -53,9 +55,10 @@ class updater
      * @return array
      * @throws \Exception
      */
-    private function checkResponseFromServer() {
+    private function checkResponseFromServer()
+    {
 
-        $serverUrl = "http://10.211.55.4/phplisttest";
+        $serverUrl = "http://10.211.55.7/version.json";
 
         // create a new cURL resource
         $ch = curl_init();
@@ -64,9 +67,9 @@ class updater
         curl_setopt($ch, CURLOPT_HEADER, 0);
 
         // grab URL
-        $responseFromServer= curl_exec($ch);
+        $responseFromServer = curl_exec($ch);
 
-        if($responseFromServer === false) {
+        if ($responseFromServer === false) {
             throw new \Exception(curl_error($ch));
         }
         // close cURL resource, and free up system resources
@@ -76,9 +79,7 @@ class updater
         $jsonEncoded = json_encode($responseFromServer);
 
         //Decode the response
-        $jsonDecoded= json_decode($jsonEncoded,true);
-
-
+        $jsonDecoded = json_decode($jsonEncoded, true);
 
         return $jsonDecoded;
     }
@@ -103,30 +104,30 @@ class updater
     function checkRequiredFiles()
     {
         $expectedFiles = array(
-            '.'=>1,
-            '..'=>1,
-            'admin'=>1,
-            'config'=>1,
-            'images'=>1,
-            'js'=>1,
-            'styles'=>1,
-            'texts'=>1,
-            '.htaccess'=>1,
-            'dl.php'=>1,
-            'index.html'=>1,
-            'index.php'=>1,
-            'lt.php'=>1,
-            'ut.php'=>1,
+            '.' => 1,
+            '..' => 1,
+            'admin' => 1,
+            'config' => 1,
+            'images' => 1,
+            'js' => 1,
+            'styles' => 1,
+            'texts' => 1,
+            '.htaccess' => 1,
+            'dl.php' => 1,
+            'index.html' => 1,
+            'index.php' => 1,
+            'lt.php' => 1,
+            'ut.php' => 1,
         );
 
-        $existingFiles = scandir(__DIR__.'/../../');
+        $existingFiles = scandir(__DIR__ . '/../../');
 
         foreach ($existingFiles as $fileName) {
 
-            if (isset($expectedFiles[$fileName])){
+            if (isset($expectedFiles[$fileName])) {
                 unset($expectedFiles[$fileName]);
             } else {
-                $expectedFiles[$fileName]=1;
+                $expectedFiles[$fileName] = 1;
             }
 
         }
@@ -136,24 +137,24 @@ class updater
     }
 
     /**
-     * @return bool
+     * @return string
      */
     function checkUserPermission()
-    { $permission = true;
-
-        if (!$_SESSION['logindetails']['superuser']) {
-           echo s("Sorry, you don't have permission to update phpList");
-            $permission = false;
-
+    {
+        $message = "Granted!";
+        if (!isSuperUser()) {
+            /** @var string $message */
+            $message = "Sorry, you don't have permission to update phpList";
         }
-        return $permission;
+        return $message;
     }
-    function downloadUpdate($zipFile )
+
+    function downloadUpdate()
     {
         /** @var string $url */
-        $this->url = "http://10.211.55.4/phplisttest";
+        $url = "http://10.211.55.7/phplist.zip";
         /** @var ZipArchive $zipFile */
-        $this->$zipFile = "/../../phpList.zip"; // Local Zip File Path
+        $zipFile = getcwd(); // Local Zip File Path
         $zipResource = fopen($zipFile, "w"); // Get The Zip File From Server
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
@@ -171,21 +172,22 @@ class updater
             echo "Error :- " . curl_error($ch);
         }
         curl_close($ch);
-    }
 
-    function unZipFiles($extractPath, $zipFile)
-    {
         $zip = new ZipArchive;
-        $this->$extractPath = "../../";
-        if($zip->open($this->$zipFile) != "true"){
+        $extractPath = getcwd();
+        if ($zip->open($zipFile) != "true") {
             echo "Error :- Unable to open the Zip File";
         }
         /* Extract Zip File */
         $zip->extractTo($extractPath);
         $zip->close();
+
     }
 }
 
 $update = new updater();
 var_dump($update->checkWritePermissions());
 var_dump($update->checkRequiredFiles());
+var_dump($update->checkUserPermission());
+$update->downloadUpdate();
+
