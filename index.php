@@ -21,7 +21,7 @@ class updater
      */
     public function getCurrentVersion()
     {
-        $jsonVersion = file_get_contents('/../version.json/');
+        $jsonVersion = file_get_contents('version.json');
         $decodedVersion = json_decode($jsonVersion, true);
         $currentVersion = isset($decodedVersion['version']) ? $decodedVersion['version'] : '';
 
