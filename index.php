@@ -10,19 +10,22 @@ class updater
     /** @var bool */
     private $availableUpdate = false;
     /** @var string */
-    private $currentVersion = 'unknown';
     /** @var string */
     private $url;
 
 
     /**
-     * Returns current version or "unknown".
+     * Returns current version of phpList.
      *
      * @return string
      */
     public function getCurrentVersion()
     {
-        return $this->currentVersion;
+        $jsonVersion = file_get_contents('/../version.json/');
+        $decodedVersion = json_decode($jsonVersion, true);
+        $currentVersion = isset($decodedVersion['version']) ? $decodedVersion['version'] : '';
+
+        return $currentVersion;
     }
 
     /**
@@ -32,11 +35,11 @@ class updater
     function checkIfThereIsAnUpdate()
     {
         $serverResponse = $this->checkResponseFromServer();
-        $version = isset($serverResponse['phplistversion']) ? $serverResponse['phplistversion'] : '';
+        $version = isset($serverResponse['version']) ? $serverResponse['version'] : '';
         $versionString = isset($serverResponse['versionstring']) ? $serverResponse['versionstring'] : '';
-        if ($version !== '' && $version !== $this->currentVersion) {
+        if ($version !== '' && $version !== $this->getCurrentVersion()) {
             $this->availableUpdate = true;
-            $updateMessage = 'Update to the' . htmlentities($versionString) . ' is available. <br />The following file will be downloaded: <code ">' . $serverResponse['url'] . '</code>';
+            $updateMessage = 'Update to the' . htmlentities($versionString) . ' is available. <br />The following phpList file will be downloaded: <code ">' . $serverResponse['url'] . '</code>';
         } else {
             $updateMessage = 'There is no update available.';
         }
