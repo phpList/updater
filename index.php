@@ -189,7 +189,9 @@ $update = new updater();
 var_dump($update->checkWritePermissions());
 var_dump($update->checkRequiredFiles());
 var_dump($update->checkUserPermission());
+var_dump($update->getCurrentVersion());
 var_dump($update->checkResponseFromServer());
 var_dump($update->checkIfThereIsAnUpdate());
+//$update->downloadUpdate();
 
 
