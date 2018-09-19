@@ -29,6 +29,7 @@ class updater
     }
 
     /**
+     * Checks if there is an Update Available
      * @return string
      * @throws \Exception
      */
@@ -36,12 +37,13 @@ class updater
     {
         $serverResponse = $this->checkResponseFromServer();
         $version = isset($serverResponse['version']) ? $serverResponse['version'] : '';
+
         $versionString = isset($serverResponse['versionstring']) ? $serverResponse['versionstring'] : '';
-        if ($version !== '' && $version !== $this->getCurrentVersion()) {
+        if ($version!== '' && $version !== $this->getCurrentVersion() && version_compare($this->getCurrentVersion(), $version)) {
             $this->availableUpdate = true;
-            $updateMessage = 'Update to the' . htmlentities($versionString) . ' is available. <br />The following phpList file will be downloaded: <code ">' . $serverResponse['url'] . '</code>';
+            $updateMessage = 'Update to the ' . htmlentities($versionString) . ' is available.  ' ;
         } else {
-            $updateMessage = 'There is no update available.';
+            $updateMessage = 'phpList is up-to-date.';
         }
         if ($this->availableUpdate && isset($serverResponse['autoupdater']) && !($serverResponse['autoupdater'] === 1 || $serverResponse['autoupdater'] === '1')) {
             $this->availableUpdate = false;
@@ -58,34 +60,29 @@ class updater
      * @return array
      * @throws \Exception
      */
-    private function checkResponseFromServer()
+     function checkResponseFromServer()
     {
-
         $serverUrl = "http://10.211.55.7/version.json";
 
         // create a new cURL resource
         $ch = curl_init();
         // set URL and other appropriate options
-        curl_setopt($ch, CURLOPT_URL, $serverUrl);
-        curl_setopt($ch, CURLOPT_HEADER, 0);
+        // Disable SSL verification
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        // Will return the response, if false it print the response
+         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        // Set the url
+         curl_setopt($ch, CURLOPT_URL, $serverUrl);
+        // Execute
+         $responseFromServer = curl_exec($ch);
+        // Closing
+         curl_close($ch);
 
-        // grab URL
-        $responseFromServer = curl_exec($ch);
+        // decode json
+        $responseFromServer = json_decode($responseFromServer, true);
 
-        if ($responseFromServer === false) {
-            throw new \Exception(curl_error($ch));
-        }
-        // close cURL resource, and free up system resources
-
-        curl_close($ch);
-        //Encode the response to json
-        $jsonEncoded = json_encode($responseFromServer);
-
-        //Decode the response
-        $jsonDecoded = json_decode($jsonEncoded, true);
-
-        return $jsonDecoded;
-    }
+         return $responseFromServer;
+     }
 
 
     function checkWritePermissions()
@@ -147,7 +144,7 @@ class updater
     }
 
     /**
-     *
+     * Download and unzip phpList from remote server
      */
     function downloadUpdate()
     {
@@ -193,5 +190,8 @@ var_dump($update->checkWritePermissions());
 var_dump($update->checkRequiredFiles());
 var_dump($update->checkUserPermission());
 var_dump($update->getCurrentVersion());
-$update->downloadUpdate();
+var_dump($update->checkResponseFromServer());
+var_dump($update->checkIfThereIsAnUpdate());
+//$update->downloadUpdate();
+
 
