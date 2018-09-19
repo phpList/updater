@@ -35,7 +35,7 @@ class updater
      */
     function checkIfThereIsAnUpdate()
     {
-        $serverResponse = $this->checkResponseFromServer();
+        $serverResponse = $this->getResponseFromServer();
         $version = isset($serverResponse['version']) ? $serverResponse['version'] : '';
 
         $versionString = isset($serverResponse['versionstring']) ? $serverResponse['versionstring'] : '';
@@ -56,11 +56,11 @@ class updater
 
     /**
      *
-     *
+     * Return version data from server
      * @return array
      * @throws \Exception
      */
-     function checkResponseFromServer()
+     function getResponseFromServer()
     {
         $serverUrl = "http://10.211.55.7/version.json";
 
@@ -190,7 +190,7 @@ var_dump($update->checkWritePermissions());
 var_dump($update->checkRequiredFiles());
 var_dump($update->checkUserPermission());
 var_dump($update->getCurrentVersion());
-var_dump($update->checkResponseFromServer());
+var_dump($update->getResponseFromServer());
 var_dump($update->checkIfThereIsAnUpdate());
 //$update->downloadUpdate();
 
