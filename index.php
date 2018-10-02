@@ -195,3 +195,54 @@ var_dump($update->checkIfThereIsAnUpdate());
 //$update->downloadUpdate();
 
 
+/**
+ *
+ * @ToDo write start and end action functions
+ *
+ */
+if(isset($_POST['action'])) {
+    set_time_limit(0);
+
+    //ensure that $action is integer
+
+        $action = (int)$_POST['action'];
+
+        switch ($action) {
+            case 1:
+                $update->checkRequiredFiles();
+                break;
+            case 2:
+                $update->checkWritePermissions();
+                break;
+            case 3:
+                $update->downloadUpdate();
+                break;
+
+        };
+
+
+}
+?>
+
+<html>
+<head>
+    <link rel="stylesheet" href="style.css">
+    <script src="update.js"></script>
+</head>
+<body>
+<div class="progress-bar">
+    <div id="bar" class="progress-value" style="width: 1%;">
+        <span id="value">1%</span>
+        <span id="action"> <?php echo $action; ?></span>
+    </div>
+</div>
+
+
+
+</body>
+</html>
+
+
+
+
+

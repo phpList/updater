@@ -1,0 +1,17 @@
+
+.progress-bar {
+    background-color: lightgray;
+    border-radius: 1.25em;
+    width: 300px;
+    height: 16px;
+    display: inline-block;
+}
+.progress-value {
+    color: #fff;
+    text-align: center;
+    background-color: steelblue;
+    transition: .3s all linear;
+    border-radius: 1.25em;
+    height: 16px;
+    display: inline-block;
+}
