@@ -257,18 +257,34 @@ if(isset($_POST['action'])) {
 
         $action = (int)$_POST['action'];
 
-        switch ($action) {
-            case 1:
-                $update->checkRequiredFiles();
-                break;
-            case 2:
-                $update->checkWritePermissions();
-                break;
-            case 3:
+    switch ($action) {
+        case 1:
+            $unexpectedFiles = $update->checkRequiredFiles();
+            if(count($unexpectedFiles) !== 0) {
+                echo(json_encode(array('continue' => false, 'response' => $unexpectedFiles)));
+            } else {
+                echo(json_encode(array('continue' => true)));
+            }
+            break;
+        case 2:
+            $notWriteableFiles = $update->checkWritePermissions();
+            if(count($notWriteableFiles) !== 0) {
+                echo(json_encode(array('continue' => false, 'response' => $notWriteableFiles)));
+            } else {
+                echo(json_encode(array('continue' => true)));
+            }
+            break;
+        case 3:
+            try {
                 $update->downloadUpdate();
-                break;
+                echo(json_encode(array('continue' => true)));
+            } catch (\Exception $e) {
+                echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
+            }
+            break;
 
-        };
+    };
+
 
 
 }
