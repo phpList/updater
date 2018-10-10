@@ -15,6 +15,14 @@ class updater
 
 
     /**
+     * Return true if there is an update available
+     * @return bool
+    */
+    public  function availableUpdate(){
+        return $this->availableUpdate;
+    }
+
+    /**
      * Returns current version of phpList.
      *
      * @return string
