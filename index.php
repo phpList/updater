@@ -9,15 +9,12 @@ class updater
 {
     /** @var bool */
     private $availableUpdate = false;
-    /** @var string */
-    /** @var string */
-    private $url;
 
 
     /**
      * Return true if there is an update available
      * @return bool
-    */
+     */
     public  function availableUpdate(){
         return $this->availableUpdate;
     }
@@ -68,7 +65,7 @@ class updater
      * @return array
      * @throws \Exception
      */
-     function getResponseFromServer()
+    function getResponseFromServer()
     {
         $serverUrl = "http://10.211.55.7/version.json";
 
@@ -78,19 +75,20 @@ class updater
         // Disable SSL verification
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         // Will return the response, if false it print the response
-         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         // Set the url
-         curl_setopt($ch, CURLOPT_URL, $serverUrl);
+        curl_setopt($ch, CURLOPT_URL, $serverUrl);
         // Execute
-         $responseFromServer = curl_exec($ch);
+        $responseFromServer = curl_exec($ch);
         // Closing
-         curl_close($ch);
+        curl_close($ch);
 
         // decode json
         $responseFromServer = json_decode($responseFromServer, true);
 
-         return $responseFromServer;
-     }
+        return $responseFromServer;
+    }
+
 
 
     function checkWritePermissions()
@@ -198,8 +196,48 @@ class updater
 
     }
 
+    /**
+     * Get a PDO connection
+     * @return PDO
+     */
+    function getConnection(){
 
+        require __DIR__.'/../../config/config.php';
 
+        $charset = 'utf8mb4';
+
+        /** @var string $database_host
+         *  @var string $database_name
+         * @var string $database_user
+         * @var string $database_password
+         */
+
+        $dsn = "mysql:host=$database_host;dbname=$database_name;charset=$charset";
+        $options = array(
+            PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            PDO::ATTR_EMULATE_PREPARES   => false,
+        );
+        try {
+            $pdo = new PDO($dsn, $database_user, $database_password, $options);
+        } catch (\PDOException $e) {
+            throw new \PDOException($e->getMessage(), (int)$e->getCode());
+        }
+        return $pdo;
+    }
+
+    /**
+     *Set the maintenance mode
+     */
+    function addMaintenanceMode()
+    {
+
+        $name = 'maintenancemode';
+        $value = "Update process ";
+        $sql = "UPDATE phplist_config SET value =?, editable =? where item =? ";
+        $this->getConnection()->prepare($sql)->execute(array($value, 0, $name));
+
+    }
 
 
     /**
@@ -245,6 +283,7 @@ class updater
 }
 
 $update = new updater();
+$update->addMaintenanceMode();
 var_dump($update->checkWritePermissions());
 var_dump($update->checkRequiredFiles());
 var_dump($update->getCurrentVersion());
@@ -263,7 +302,7 @@ if(isset($_POST['action'])) {
 
     //ensure that $action is integer
 
-        $action = (int)$_POST['action'];
+    $action = (int)$_POST['action'];
 
     switch ($action) {
         case 1:
@@ -315,8 +354,3 @@ if(isset($_POST['action'])) {
 
 </body>
 </html>
-
-
-
-
-
