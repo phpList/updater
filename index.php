@@ -239,6 +239,19 @@ class updater
 
     }
 
+    /**
+     *Clear the maintenance mode
+     */
+    function removeMaintenanceMode()
+    {
+        $name = 'maintenancemode';
+        $value = '';
+        $sql = "UPDATE phplist_config SET value =?, editable =? where item =? ";
+        $this->getConnection()->prepare($sql)->execute(array($value, 0, $name));
+
+    }
+
+
 
     /**
      * Download and unzip phpList from remote server
@@ -290,6 +303,7 @@ var_dump($update->getCurrentVersion());
 var_dump($update->getResponseFromServer());
 var_dump($update->checkIfThereIsAnUpdate());
 //$update->downloadUpdate();
+//$update->removeMaintenanceMode();
 
 
 /**
