@@ -228,10 +228,26 @@ class updater
 
     /**
      *Set the maintenance mode
+     * @return bool true - maintenance mode is set; false - maintenance mode could not be set because an update is already running
      */
     function addMaintenanceMode()
     {
-
+        $prepStmt = $this->getConnection()->prepare("SELECT * FROM phplist_config WHERE item=?");
+        $prepStmt->execute(['update_in_progress']);
+        $result = $prepStmt->fetch(PDO::FETCH_ASSOC);
+        if($result === false ){
+            // the row does not exist => no update running
+            $this->getConnection()
+                ->prepare('INSERT INTO phplist_config(`item`,`editable`,`value`) VALUES (?,0,?)')
+                ->execute(['update_in_progress','1']);
+        }elseif ($result['update_in_progress'] == '0'){
+            $this->getConnection()
+                ->prepare('UPDATE phplist_config SET `value`=? WHERE `item`=?')
+                ->execute(['1','update_in_progress']);
+        }else{
+            // the row exists and is not 0 => there is an update running
+            return false;
+        }
         $name = 'maintenancemode';
         $value = "Update process ";
         $sql = "UPDATE phplist_config SET value =?, editable =? where item =? ";
@@ -240,7 +256,7 @@ class updater
     }
 
     /**
-     *Clear the maintenance mode
+     *Clear the maintenance mode and remove the update_in_progress lock
      */
     function removeMaintenanceMode()
     {
@@ -248,6 +264,10 @@ class updater
         $value = '';
         $sql = "UPDATE phplist_config SET value =?, editable =? where item =? ";
         $this->getConnection()->prepare($sql)->execute(array($value, 0, $name));
+
+        $this->getConnection()
+            ->prepare('UPDATE phplist_config SET `value`=? WHERE `item`=?')
+            ->execute(["0","update_in_progress"]);
 
     }
 
@@ -296,7 +316,10 @@ class updater
 }
 
 $update = new updater();
-$update->addMaintenanceMode();
+if(!$update->addMaintenanceMode()){
+    //TODO define how you want to progress if there is already an update running.
+    die('There is already an update running');
+}
 var_dump($update->checkWritePermissions());
 var_dump($update->checkRequiredFiles());
 var_dump($update->getCurrentVersion());
