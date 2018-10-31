@@ -233,17 +233,17 @@ class updater
     function addMaintenanceMode()
     {
         $prepStmt = $this->getConnection()->prepare("SELECT * FROM phplist_config WHERE item=?");
-        $prepStmt->execute(['update_in_progress']);
+        $prepStmt->execute(array('update_in_progress'));
         $result = $prepStmt->fetch(PDO::FETCH_ASSOC);
         if($result === false ){
             // the row does not exist => no update running
             $this->getConnection()
                 ->prepare('INSERT INTO phplist_config(`item`,`editable`,`value`) VALUES (?,0,?)')
-                ->execute(['update_in_progress','1']);
+                ->execute(array('update_in_progress','1'));
         }elseif ($result['update_in_progress'] == '0'){
             $this->getConnection()
                 ->prepare('UPDATE phplist_config SET `value`=? WHERE `item`=?')
-                ->execute(['1','update_in_progress']);
+                ->execute(array('1','update_in_progress'));
         }else{
             // the row exists and is not 0 => there is an update running
             return false;
@@ -267,7 +267,7 @@ class updater
 
         $this->getConnection()
             ->prepare('UPDATE phplist_config SET `value`=? WHERE `item`=?')
-            ->execute(["0","update_in_progress"]);
+            ->execute(array("0","update_in_progress"));
 
     }
 
@@ -316,10 +316,10 @@ class updater
 }
 
 $update = new updater();
-if(!$update->addMaintenanceMode()){
+//if(!$update->addMaintenanceMode()){
     //TODO define how you want to progress if there is already an update running.
-    die('There is already an update running');
-}
+//    die('There is already an update running');
+//}
 var_dump($update->checkWritePermissions());
 var_dump($update->checkRequiredFiles());
 var_dump($update->getCurrentVersion());
