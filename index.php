@@ -278,7 +278,6 @@ class updater
      */
     function downloadUpdate()
     {
-        echo exec('whoami');
         /** @var string $url */
         $url = "http://10.211.55.7/phplist.zip";
         /** @var ZipArchive $zipFile */
