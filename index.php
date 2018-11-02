@@ -313,6 +313,13 @@ class updater
         die(', phpList was probably extracted, please check.');
 
     }
+
+    function cleanUp()
+    {
+        if (function_exists('opcache_reset')) {
+            opcache_reset();
+        }
+    }
 }
 
 $update = new updater();
