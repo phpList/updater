@@ -305,16 +305,9 @@ class updater
             echo "Error :- ".curl_error($ch);
         }
         curl_close($ch);
-        /* Open the Zip file */
-        $zip = new ZipArchive;
-        $extractPath = getcwd(); // extract to the current path
-        if($zip->open($zipFile) != "true"){
-            echo "Error :- Unable to open the Zip File";
-        }
-        /* Extract Zip File */
-        $zip->extractTo($extractPath);
-        $zip->close();
-        die(', phpList was probably extracted, please check.');
+
+        // extract files
+        $this->unZipFiles($zipFile, getcwd());
 
     }
 
@@ -358,6 +351,22 @@ class updater
         return false;
     }
 
+    function unZipFiles($toBeExtracted, $extractPath){
+        $zip = new ZipArchive;
+        /* Open the Zip file */
+        if($zip->open($toBeExtracted) != "true"){
+            echo "Error :- Unable to open the Zip File";
+        }
+        /* Extract Zip File */
+        $zip->extractTo($extractPath);
+        $zip->close();
+        die(', phpList was probably extracted, please check.');
+
+    }
+
+    function recoverFiles(){
+        $this->unZipFiles('../backup.zip', '../../../');
+    }
 }
 
 $update = new updater();
@@ -486,7 +495,7 @@ if(isset($_POST['action'])) {
             if (empty($requiredFiles)){
                 echo "OK";
             } else {
-                echo "The following files are not expexted:";
+                echo "The following files are not expected:";
                 foreach ($requiredFiles as $key) {
                     echo $value;
                 }
