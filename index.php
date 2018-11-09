@@ -90,7 +90,10 @@ class updater
     }
 
 
-
+    /**
+     * Checks write permissions and returns files that are not writable
+     * @return array
+     */
     function checkWritePermissions()
     {
 
@@ -107,6 +110,9 @@ class updater
 
     }
 
+    /**
+     * @return array
+     */
     function checkRequiredFiles()
     {
         $expectedFiles = array(
@@ -186,7 +192,6 @@ class updater
 
         $excludedFiles = array(
             'config.php',
-            'config_extended.php',
             'init.php',
         );
 
@@ -322,51 +327,52 @@ class updater
 
 
     /**
-     * backUpData('/path/to/folder', '/path/to/backup.zip';
+     * backUpFiles('/path/to/folder', '/path/to/backup.zip';
      * @param $source /path to folder
      * @param $destination 'path' to backup zip
      * @return bool
      */
-    function backUpData($source, $destination) {
-    if (extension_loaded('zip') === true) {
-        if (file_exists($source) === true) {
-            $zip = new ZipArchive();
-            if ($zip->open($destination, ZIPARCHIVE::CREATE) === true) {
-                $source = realpath($source);
-                if (is_dir($source) === true) {
-                    $files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($source), RecursiveIteratorIterator::SELF_FIRST);
-                    foreach ($files as $file) {
-                        $file = realpath($file);
-                        if (is_dir($file) === true) {
-                            $zip->addEmptyDir(str_replace($source . '/', '', $file . '/'));
-                        } else if (is_file($file) === true) {
-                            $zip->addFromString(str_replace($source . '/', '', $file), file_get_contents($file));
+    function backUpFiles($source, $destination) {
+        if (extension_loaded('zip') === true) {
+            if (file_exists($source) === true) {
+                $zip = new ZipArchive();
+                if ($zip->open($destination, ZIPARCHIVE::CREATE) === true) {
+                    $source = realpath($source);
+                    if (is_dir($source) === true) {
+                        $files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($source), RecursiveIteratorIterator::SELF_FIRST);
+                        foreach ($files as $file) {
+                            $file = realpath($file);
+                            if (is_dir($file) === true) {
+                                $zip->addEmptyDir(str_replace($source . '/', '', $file . '/'));
+                            } else if (is_file($file) === true) {
+                                $zip->addFromString(str_replace($source . '/', '', $file), file_get_contents($file));
+                            }
                         }
+                    } else if (is_file($source) === true) {
+                        $zip->addFromString(basename($source), file_get_contents($source));
                     }
-                } else if (is_file($source) === true) {
-                    $zip->addFromString(basename($source), file_get_contents($source));
                 }
+                return $zip->close();
             }
-            return $zip->close();
         }
+        return false;
     }
-    return false;
-}
 
 }
 
 $update = new updater();
 //if(!$update->addMaintenanceMode()){
-    //TODO define how you want to progress if there is already an update running.
+//TODO define how you want to progress if there is already an update running.
 //    die('There is already an update running');
 //}
-var_dump($update->checkWritePermissions());
-var_dump($update->checkRequiredFiles());
-var_dump($update->getCurrentVersion());
-var_dump($update->getResponseFromServer());
-var_dump($update->checkIfThereIsAnUpdate());
+//var_dump($update->checkWritePermissions());
+//var_dump($update->checkRequiredFiles());
+//var_dump($update->getCurrentVersion());
+//var_dump($update->getResponseFromServer());
+//var_dump($update->checkIfThereIsAnUpdate());
 //$update->downloadUpdate();
 //$update->removeMaintenanceMode();
+//$update->backUpFiles('../../../', '../backup.zip');
 
 
 /**
@@ -420,12 +426,142 @@ if(isset($_POST['action'])) {
     <script src="update.js"></script>
 </head>
 <body>
-<div class="progress-bar">
-    <div id="bar" class="progress-value" style="width: 1%;">
-        <span id="value">1%</span>
-        <span id="action"> <?php echo $action; ?></span>
-    </div>
-</div>
+
+<progress id="updateProgress" value = "0" max=" 100">
+</progress>
+
+<ul>
+
+    <li>
+        <h3> Starting...</h3>
+            <div> Current version of phpList is:  <?php echo($update->getCurrentVersion())?> <br>
+                <?php
+                try {
+                $text =$update->checkIfThereIsAnUpdate();
+
+            } catch (\Exception $e) {
+                $e->getMessage();
+            }
+
+                    echo $text;
+
+
+                    if ($update->availableUpdate()) {
+
+                        ?>
+                        <button id="startUpdate" onclick="startUpdate()"> Continue</button>
+                        <?php
+                    }
+                        ?>
+            </div>
+    </li>
+    <li>
+            <div>
+                Checking write permissions:
+                <?php
+                $writepermission = $update->checkWritePermissions();
+
+                if (empty($writepermission)){
+                    echo "OK";
+                } else {
+                    echo "The following files cannot be written:";
+                    foreach ($writepermission as $key=> $value) {
+                        echo $value;
+                    }
+                }
+
+                ?>
+
+
+
+            </div>
+    </li>
+    <li>
+
+        <div>
+            Checking required files:
+            <?php
+            $requiredFiles = $update->checkRequiredFiles();
+
+            if (empty($requiredFiles)){
+                echo "OK";
+            } else {
+                echo "The following files are not expexted:";
+                foreach ($requiredFiles as $key) {
+                    echo $value;
+                }
+            }
+
+            ?>
+
+        </div>
+    </li>
+
+    <li>
+        <div>
+            Backing up old files:
+            <?php
+            try {
+                $update->backUpFiles('../../../', '../backup.zip');
+            } catch (\Exception $e) {
+                $e->getMessage();
+            }
+            ?>
+
+        </div>
+    </li>
+
+    <li>
+        <div>
+            Downloading files:
+            <?php
+            try {
+                $update->downloadUpdate();
+
+            } catch (\Exception $e) {
+                $e->getMessage();
+            }
+            ?>
+
+        </div>
+    </li>
+
+    <li>
+        <div>
+            Set Maintenance Mode on:
+            <?php
+            try {
+                $update->addMaintenanceMode();
+
+            } catch (\Exception $e) {
+                $e->getMessage();
+            }
+            ?>
+
+        </div>
+    </li>
+
+
+
+</ul>
+
+<script>
+
+    function startUpdate() {
+        let elem = document.getElementById("updateProgress");
+        let width = 1;
+        let id = setInterval(frame, 10);
+
+        function frame() {
+            if (width >= 100) {
+                clearInterval(id);
+            } else {
+                width++;
+                elem.style.width = width + '%';
+            }
+        }
+    }
+</script>
 
 
 
