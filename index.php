@@ -432,6 +432,9 @@ if(isset($_POST['action'])) {
 <html>
 <head>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
     <script src="update.js"></script>
 </head>
 <body>
@@ -460,7 +463,7 @@ if(isset($_POST['action'])) {
                         ?>
                         <button id="startUpdate" onclick="startUpdate()"> Continue</button>
                         <?php
-                    }
+                    } else return;
                         ?>
             </div>
     </li>
@@ -474,9 +477,13 @@ if(isset($_POST['action'])) {
                     echo "OK";
                 } else {
                     echo "The following files cannot be written:";
+                    echo '<br><span class="alert-danger">';
                     foreach ($writepermission as $key=> $value) {
                         echo $value;
+                        echo '</br>';
                     }
+                    echo '</span>';
+                    return;
                 }
 
                 ?>
@@ -495,10 +502,15 @@ if(isset($_POST['action'])) {
             if (empty($requiredFiles)){
                 echo "OK";
             } else {
+
                 echo "The following files are not expected:";
+                echo '<br><span class="alert-danger">';
                 foreach ($requiredFiles as $key) {
-                    echo $value;
+                    echo $key;
+                    echo '</br>';
                 }
+                echo '</span>';
+                return;
             }
 
             ?>
