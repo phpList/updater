@@ -195,10 +195,6 @@ class updater
             'init.php',
         );
 
-
-
-
-
     }
 
     /**
@@ -446,51 +442,54 @@ if(isset($_POST['action'])) {
 
     <li>
         <h3> Starting...</h3>
-            <div> Current version of phpList is:  <?php echo($update->getCurrentVersion())?> <br>
-                <?php
-                try {
+        <div> Current version of phpList is:  <?php echo($update->getCurrentVersion())?> <br>
+            <?php
+            try {
                 $text =$update->checkIfThereIsAnUpdate();
 
             } catch (\Exception $e) {
                 $e->getMessage();
             }
 
-                    echo $text;
+            echo $text;
 
 
-                    if ($update->availableUpdate()) {
-
-                        ?>
-                        <button id="startUpdate" onclick="startUpdate()"> Continue</button>
-                        <?php
-                    } else return;
-                        ?>
-            </div>
-    </li>
-    <li>
-            <div>
-                Checking write permissions:
-                <?php
-                $writepermission = $update->checkWritePermissions();
-
-                if (empty($writepermission)){
-                    echo "OK";
-                } else {
-                    echo "The following files cannot be written:";
-                    echo '<br><span class="alert-danger">';
-                    foreach ($writepermission as $key=> $value) {
-                        echo $value;
-                        echo '</br>';
-                    }
-                    echo '</span>';
-                    return;
-                }
+            if ($update->availableUpdate()) {
 
                 ?>
+                <button id="startUpdate" onclick="startUpdate()"> Continue</button>
+                <?php
+            }
+            ?>
+        </div>
+    </li>
+    <li>
+        <div>
+            Checking write permissions:
+            <?php
+            $writepermission = $update->checkWritePermissions();
+
+            if (empty($writepermission)){
+                echo "OK";
+            } else {
+                echo "The following files cannot be written:";
+                echo '<br><span class="alert-danger">';
+                foreach ($writepermission as $key=> $value) {
+                    echo $value;
+                    echo '</br>';
+                }
+                echo '</span>';
+                echo '<span class="alert-warning">';
+                echo "Please, change the files permission and try again.";
+                echo '</span>';
+                return;
+            }
+
+            ?>
 
 
 
-            </div>
+        </div>
     </li>
     <li>
 
@@ -505,10 +504,13 @@ if(isset($_POST['action'])) {
 
                 echo "The following files are not expected:";
                 echo '<br><span class="alert-danger">';
-                foreach ($requiredFiles as $key) {
+                foreach ($requiredFiles as $key=>$value) {
                     echo $key;
                     echo '</br>';
                 }
+                echo '</span>';
+                echo '<span class="alert-warning">';
+                echo "Please, remove the unexpected files and try again.";
                 echo '</span>';
                 return;
             }
@@ -561,8 +563,6 @@ if(isset($_POST['action'])) {
 
         </div>
     </li>
-
-
 
 </ul>
 
