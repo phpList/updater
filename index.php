@@ -130,6 +130,7 @@ class updater
             'index.php' => 1,
             'lt.php' => 1,
             'ut.php' => 1,
+            'init.php' =>1,
         );
 
         $existingFiles = scandir(__DIR__ . '/../../');
