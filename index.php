@@ -97,9 +97,9 @@ class updater
     function checkWritePermissions()
     {
 
-        $directory = new \RecursiveDirectoryIterator(__DIR__ . '/../../');
+        $directory = new \RecursiveDirectoryIterator(__DIR__ . '/../../',\RecursiveDirectoryIterator::SKIP_DOTS); // Exclude dot files
         /** @var SplFileInfo[] $iterator */
-        $iterator = new \RecursiveIteratorIterator($directory);
+        $iterator = new \RecursiveIteratorIterator($directory );
         $files = array();
         foreach ($iterator as $info) {
             if (!is_writable($info->getRealPath())) {
@@ -149,6 +149,7 @@ class updater
     }
 
     /**
+     *
      * Recursively delete a directory and all of it's contents - e.g.the equivalent of `rm -r` on the command-line.
      * Consistent with `rmdir()` and `unlink()`, an E_WARNING level error will be generated on failure.
      *
