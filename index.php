@@ -99,7 +99,7 @@ class updater
 
         $directory = new \RecursiveDirectoryIterator(__DIR__ . '/../../',\RecursiveDirectoryIterator::SKIP_DOTS); // Exclude dot files
         /** @var SplFileInfo[] $iterator */
-        $iterator = new \RecursiveIteratorIterator($directory );
+        $iterator = new \RecursiveIteratorIterator($directory, RecursiveIteratorIterator::CHILD_FIRST );
         $files = array();
         foreach ($iterator as $info) {
             if (!is_writable($info->getRealPath())) {
@@ -130,7 +130,6 @@ class updater
             'index.php' => 1,
             'lt.php' => 1,
             'ut.php' => 1,
-            'init.php' =>1,
         );
 
         $existingFiles = scandir(__DIR__ . '/../../');
@@ -144,6 +143,7 @@ class updater
             }
 
         }
+
         return $expectedFiles;
 
 
@@ -284,7 +284,7 @@ class updater
         /** @var string $url */
         $url = "http://10.211.55.7/phplist.zip";
         /** @var ZipArchive $zipFile */
-        $zipFile = "phplist.zip"; // Local Zip File Path
+        $zipFile = "downloaded-phplist.zip"; // Local Zip File Path
         $zipResource = fopen($zipFile, "w");
         // Get The Zip File From Server
         $ch = curl_init();
@@ -305,9 +305,11 @@ class updater
         curl_close($ch);
 
         // extract files
-        $this->unZipFiles($zipFile, getcwd());
+        $this->unZipFiles($zipFile, '../../../');
 
     }
+
+
 
     function cleanUp()
     {
@@ -363,7 +365,7 @@ class updater
     }
 
     function recoverFiles(){
-        $this->unZipFiles('../backup.zip', '../../../');
+        $this->unZipFiles('backup.zip', '../../../');
     }
 }
 
@@ -431,14 +433,19 @@ if(isset($_POST['action'])) {
 <head>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/boo"></script>
     <script src="update.js"></script>
 </head>
 <body>
 
-<progress id="updateProgress" value = "0" max=" 100">
-</progress>
+<h3>Dynamic Progress Bar</h3>
+<p>Running progress bar from 0% to 100% in 10 seconds</p>
+<div class="progress">
+    <div id="dynamic" class="progress-bar progress-bar-success progress-bar-striped active" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%">
+        <span id="current-progress"></span>
+    </div>
+</div>
 
 <ul>
 
@@ -528,6 +535,7 @@ if(isset($_POST['action'])) {
             <?php
             try {
                 $update->backUpFiles('../../../', '../backup.zip');
+                echo "OK";
             } catch (\Exception $e) {
                 $e->getMessage();
             }
@@ -542,6 +550,7 @@ if(isset($_POST['action'])) {
             <?php
             try {
                 $update->downloadUpdate();
+                echo "OK";
 
             } catch (\Exception $e) {
                 $e->getMessage();
@@ -557,6 +566,7 @@ if(isset($_POST['action'])) {
             <?php
             try {
                 $update->addMaintenanceMode();
+                echo "OK";
 
             } catch (\Exception $e) {
                 $e->getMessage();
@@ -570,20 +580,20 @@ if(isset($_POST['action'])) {
 
 <script>
 
-    function startUpdate() {
-        let elem = document.getElementById("updateProgress");
-        let width = 1;
-        let id = setInterval(frame, 10);
+    $(function() {
+        let current_progress = 0;
+        let interval = setInterval(function() {
+            current_progress += 10;
+            $("#dynamic")
+                .css("width", current_progress + "%")
+                .attr("aria-valuenow", current_progress)
+                .text(current_progress + "% Complete");
+            if (current_progress >= 100)
+                clearInterval(interval);
+        }, 1000);
+    });
 
-        function frame() {
-            if (width >= 100) {
-                clearInterval(id);
-            } else {
-                width++;
-                elem.style.width = width + '%';
-            }
-        }
-    }
+
 </script>
 
 
