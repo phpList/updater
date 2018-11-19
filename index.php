@@ -5,11 +5,14 @@
  *
  */
 
+class UpdateException extends \Exception {}
+
 class updater
 {
     /** @var bool */
     private $availableUpdate = false;
 
+    const DOWNLOAD_PATH = '../tmp_uploaded_update';
 
     /**
      * Return true if there is an update available
@@ -106,6 +109,7 @@ class updater
                 $files[] = $info->getRealPath();
             }
         }
+
         return $files;
 
     }
@@ -157,13 +161,14 @@ class updater
      * @param string $dir absolute path to directory to delete
      *
      * @return bool true on success; false on failure
+     * @throws UpdateException
      */
 
     private function rmdir_recursive($dir)
     {
 
         if (false === file_exists($dir)) {
-            return false;
+            throw new \UpdateException("$dir doesn't exist.");
         }
 
         /** @var SplFileInfo[] $files */
@@ -174,11 +179,11 @@ class updater
         foreach ($files as $fileinfo) {
             if ($fileinfo->isDir()) {
                 if (false === rmdir($fileinfo->getRealPath())) {
-                    return false;
+                    throw new \UpdateException("Could not delete $fileinfo");
                 }
             } else {
                 if (false === unlink($fileinfo->getRealPath())) {
-                    return false;
+                    throw new \UpdateException("Could not delete $fileinfo");
                 }
             }
         }
@@ -186,16 +191,45 @@ class updater
     }
 
     /**
-     * Delete old files except config and other files that we want to keep
-     * @TODO check if we need to exclude init.php or not
+     * Delete dirs/files except config and other files that we want to keep
+     * @throws UpdateException
      */
 
     function deleteFiles() {
 
-        $excludedFiles = array(
-            'config.php',
-            'init.php',
+        $excludedFolders = array(
+            'config',
+            'tmp_uploaded_update',
+            'updater'
         );
+
+        $excludedFiles = array(
+            'dl.php',
+            'index.html',
+            'lt.php',
+            'ut.php',
+        );
+
+        $filesTodelete = scandir(__DIR__ . '/../');
+
+        foreach ($filesTodelete as $fileName) {
+            if(is_dir($fileName)) {
+                if (in_array($fileName, $excludedFolders)) {
+                    echo "$fileName is excluded";
+                    continue;
+                }
+
+            } else if (is_file($fileName)) {
+                if (in_array($fileName, $excludedFiles)) {
+                    echo "$fileName is excluded";
+                    continue;
+                }
+
+            }
+
+            $this->rmdir_recursive($fileName);
+
+        }
 
     }
 
@@ -278,14 +312,17 @@ class updater
 
     /**
      * Download and unzip phpList from remote server
+     *
+     * @throws UpdateException
      */
     function downloadUpdate()
     {
         /** @var string $url */
         $url = "http://10.211.55.7/phplist.zip";
-        /** @var ZipArchive $zipFile */
-        $zipFile = "downloaded-phplist.zip"; // Local Zip File Path
-        $zipResource = fopen($zipFile, "w");
+        $zipFile = tmpfile();
+        if ($zipFile===false){
+            throw new UpdateException("File cannot be downloaded");
+        }
         // Get The Zip File From Server
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
@@ -297,7 +334,7 @@ class updater
         curl_setopt($ch, CURLOPT_TIMEOUT, 10);
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
-        curl_setopt($ch, CURLOPT_FILE, $zipResource);
+        curl_setopt($ch, CURLOPT_FILE, $zipFile);
         $page = curl_exec($ch);
         if(!$page) {
             echo "Error :- ".curl_error($ch);
@@ -305,8 +342,20 @@ class updater
         curl_close($ch);
 
         // extract files
-        $this->unZipFiles($zipFile, '../../../');
+        $this->unZipFiles($zipFile, self::DOWNLOAD_PATH);
 
+    }
+
+    /**
+     * Creates temporary dir
+     * @throws UpdateException
+     */
+    function temp_dir(){
+
+        $tempdir = mkdir(self::DOWNLOAD_PATH, 0700);
+        if ($tempdir===false){
+            throw new UpdateException("Could not create temporary file");
+        }
     }
 
 
@@ -316,6 +365,30 @@ class updater
         if (function_exists('opcache_reset')) {
             opcache_reset();
         }
+    }
+
+    /**
+     * @throws UpdateException
+     */
+    function replacePHPEntryPoints(){
+        $entryPoints = array(
+            'dl.php',
+            'index.html',
+            'lt.php',
+            'ut.php',
+        );
+        foreach ($entryPoints as $key=> $fileName){
+            $entryFile = fopen($fileName, "w");
+            if ($entryFile===FALSE){
+                throw new UpdateException("Could not fopen $fileName") ;
+            }
+            $current = "Update in progress \n";
+            $content= file_put_contents($entryFile, $current);
+            if ($content===FALSE){
+                throw new UpdateException("Could not write to the $fileName") ;
+            }
+        }
+
     }
 
 
@@ -351,27 +424,37 @@ class updater
         return false;
     }
 
+    /**
+     * Extract Zip Files
+     * @param $toBeExtracted
+     * @param $extractPath
+     * @throws UpdateException
+     */
     function unZipFiles($toBeExtracted, $extractPath){
         $zip = new ZipArchive;
         /* Open the Zip file */
-        if($zip->open($toBeExtracted) != "true"){
-            echo "Error :- Unable to open the Zip File";
+        if($zip->open($toBeExtracted) !== "true"){
+            throw new \UpdateException("Unable to open the Zip File");
         }
         /* Extract Zip File */
         $zip->extractTo($extractPath);
         $zip->close();
-        die(', phpList was probably extracted, please check.');
 
     }
 
+    /**
+     * @throws UpdateException
+     */
     function recoverFiles(){
-        $this->unZipFiles('backup.zip', '../../../');
+        $this->unZipFiles('backup.zip', self::DOWNLOAD_PATH);
     }
 }
 
-$update = new updater();
+try {
+    $update = new updater();
+    $update->temp_dir();
+//    $update->deleteFiles();
 //if(!$update->addMaintenanceMode()){
-//TODO define how you want to progress if there is already an update running.
 //    die('There is already an update running');
 //}
 //var_dump($update->checkWritePermissions());
@@ -382,6 +465,10 @@ $update = new updater();
 //$update->downloadUpdate();
 //$update->removeMaintenanceMode();
 //$update->backUpFiles('../../../', '../backup.zip');
+
+} catch (\UpdateException $e) {
+    echo $e->getMessage();
+}
 
 
 /**
@@ -446,155 +533,6 @@ if(isset($_POST['action'])) {
         <span id="current-progress"></span>
     </div>
 </div>
-
-<ul>
-
-    <li>
-        <h3> Starting...</h3>
-        <div> Current version of phpList is:  <?php echo($update->getCurrentVersion())?> <br>
-            <?php
-            try {
-                $text =$update->checkIfThereIsAnUpdate();
-
-            } catch (\Exception $e) {
-                $e->getMessage();
-            }
-
-            echo $text;
-
-
-            if ($update->availableUpdate()) {
-
-                ?>
-                <button id="startUpdate" onclick="startUpdate()"> Continue</button>
-                <?php
-            }
-            ?>
-        </div>
-    </li>
-    <li>
-        <div>
-            Checking write permissions:
-            <?php
-            $writepermission = $update->checkWritePermissions();
-
-            if (empty($writepermission)){
-                echo "OK";
-            } else {
-                echo "The following files cannot be written:";
-                echo '<br><span class="alert-danger">';
-                foreach ($writepermission as $key=> $value) {
-                    echo $value;
-                    echo '</br>';
-                }
-                echo '</span>';
-                echo '<span class="alert-warning">';
-                echo "Please, change the files permission and try again.";
-                echo '</span>';
-                return;
-            }
-
-            ?>
-
-
-
-        </div>
-    </li>
-    <li>
-
-        <div>
-            Checking required files:
-            <?php
-            $requiredFiles = $update->checkRequiredFiles();
-
-            if (empty($requiredFiles)){
-                echo "OK";
-            } else {
-
-                echo "The following files are not expected:";
-                echo '<br><span class="alert-danger">';
-                foreach ($requiredFiles as $key=>$value) {
-                    echo $key;
-                    echo '</br>';
-                }
-                echo '</span>';
-                echo '<span class="alert-warning">';
-                echo "Please, remove the unexpected files and try again.";
-                echo '</span>';
-                return;
-            }
-
-            ?>
-
-        </div>
-    </li>
-
-    <li>
-        <div>
-            Backing up old files:
-            <?php
-            try {
-                $update->backUpFiles('../../../', '../backup.zip');
-                echo "OK";
-            } catch (\Exception $e) {
-                $e->getMessage();
-            }
-            ?>
-
-        </div>
-    </li>
-
-    <li>
-        <div>
-            Downloading files:
-            <?php
-            try {
-                $update->downloadUpdate();
-                echo "OK";
-
-            } catch (\Exception $e) {
-                $e->getMessage();
-            }
-            ?>
-
-        </div>
-    </li>
-
-    <li>
-        <div>
-            Set Maintenance Mode on:
-            <?php
-            try {
-                $update->addMaintenanceMode();
-                echo "OK";
-
-            } catch (\Exception $e) {
-                $e->getMessage();
-            }
-            ?>
-
-        </div>
-    </li>
-
-</ul>
-
-<script>
-
-    $(function() {
-        let current_progress = 0;
-        let interval = setInterval(function() {
-            current_progress += 10;
-            $("#dynamic")
-                .css("width", current_progress + "%")
-                .attr("aria-valuenow", current_progress)
-                .text(current_progress + "% Complete");
-            if (current_progress >= 100)
-                clearInterval(interval);
-        }, 1000);
-    });
-
-
-</script>
 
 
 
