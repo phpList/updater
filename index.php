@@ -100,7 +100,7 @@ class updater
     function checkWritePermissions()
     {
 
-        $directory = new \RecursiveDirectoryIterator(__DIR__ . '/../../',\RecursiveDirectoryIterator::SKIP_DOTS); // Exclude dot files
+        $directory = new \RecursiveDirectoryIterator(__DIR__ . '/../',\RecursiveDirectoryIterator::SKIP_DOTS); // Exclude dot files
         /** @var SplFileInfo[] $iterator */
         $iterator = new \RecursiveIteratorIterator($directory, RecursiveIteratorIterator::CHILD_FIRST );
         $files = array();
@@ -136,7 +136,7 @@ class updater
             'ut.php' => 1,
         );
 
-        $existingFiles = scandir(__DIR__ . '/../../');
+        $existingFiles = scandir(__DIR__ . '/../');
 
         foreach ($existingFiles as $fileName) {
 
@@ -200,11 +200,14 @@ class updater
         $excludedFolders = array(
             'config',
             'tmp_uploaded_update',
-            'updater'
+            'updater',
+            '.',
+            '..',
         );
 
         $excludedFiles = array(
             'dl.php',
+            'index.php',
             'index.html',
             'lt.php',
             'ut.php',
@@ -213,21 +216,21 @@ class updater
         $filesTodelete = scandir(__DIR__ . '/../');
 
         foreach ($filesTodelete as $fileName) {
-            if(is_dir($fileName)) {
+            if(is_dir(__DIR__.'/../'.$fileName)) {
                 if (in_array($fileName, $excludedFolders)) {
-                    echo "$fileName is excluded";
+                    echo "$fileName is excluded<br/>";
                     continue;
                 }
 
-            } else if (is_file($fileName)) {
+            } else if (is_file(__DIR__.'/../'.$fileName)) {
                 if (in_array($fileName, $excludedFiles)) {
-                    echo "$fileName is excluded";
+                    echo "$fileName is excluded<br/>";
                     continue;
                 }
 
             }
 
-            $this->rmdir_recursive($fileName);
+            echo "delete : ".__DIR__."/../$fileName   ".'<br>';
 
         }
 
@@ -391,6 +394,49 @@ class updater
 
     }
 
+    /**
+     * Returns true if the file/dir is excluded otherwise false.
+     * @param $file
+     * @return bool
+     */
+    function isExcluded($file){
+
+        $excludedFolders = array(
+            'config',
+            'tmp_uploaded_update',
+            'updater',
+            '.',
+            '..',
+        );
+
+        $excludedFiles = array(
+            'dl.php',
+            'index.php',
+            'index.html',
+            'lt.php',
+            'ut.php',
+        );
+
+        if (in_array($file, $excludedFolders)){
+            return true;
+        } else if  (in_array($file, $excludedFiles)) {
+            return true;
+        }
+        return false;
+    }
+
+    function moveNewFiles(){
+        $downloadedFiles = scandir(__DIR__ . '/../tmp_uploaded_update');
+
+        foreach ($downloadedFiles as $fileName){
+            if ($this->isExcluded($fileName)){
+                continue;
+            }
+            rename( __DIR__ . '/../tmp_uploaded_update/'.$fileName, __DIR__ . '/../'.$fileName);
+        }
+
+    }
+
 
     /**
      * backUpFiles('/path/to/folder', '/path/to/backup.zip';
@@ -452,8 +498,8 @@ class updater
 
 try {
     $update = new updater();
-    $update->temp_dir();
-//    $update->deleteFiles();
+  //  $update->temp_dir();
+    $update->deleteFiles();
 //if(!$update->addMaintenanceMode()){
 //    die('There is already an update running');
 //}
