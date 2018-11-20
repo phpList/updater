@@ -14,6 +14,14 @@ class updater
 
     const DOWNLOAD_PATH = '../tmp_uploaded_update';
 
+    private $excludedFiles = array(
+        'dl.php',
+        'index.php',
+        'index.html',
+        'lt.php',
+        'ut.php',
+    );
+
     /**
      * Return true if there is an update available
      * @return bool
@@ -205,33 +213,32 @@ class updater
             '..',
         );
 
-        $excludedFiles = array(
-            'dl.php',
-            'index.php',
-            'index.html',
-            'lt.php',
-            'ut.php',
-        );
-
         $filesTodelete = scandir(__DIR__ . '/../');
 
         foreach ($filesTodelete as $fileName) {
-            if(is_dir(__DIR__.'/../'.$fileName)) {
+            $absolutePath = __DIR__.'/../'.$fileName;
+            $is_dir = false;
+            if(is_dir($absolutePath)) {
+                $is_dir = true;
                 if (in_array($fileName, $excludedFolders)) {
                     echo "$fileName is excluded<br/>";
                     continue;
                 }
 
-            } else if (is_file(__DIR__.'/../'.$fileName)) {
-                if (in_array($fileName, $excludedFiles)) {
+            } else if (is_file($absolutePath)) {
+                if (in_array($fileName, $this->excludedFiles)) {
                     echo "$fileName is excluded<br/>";
                     continue;
                 }
 
             }
 
-            echo "delete : ".__DIR__."/../$fileName   ".'<br>';
 
+            if($is_dir) {
+                $this->rmdir_recursive($absolutePath);
+            } else {
+                unlink($absolutePath);
+            }
         }
 
     }
@@ -322,9 +329,9 @@ class updater
     {
         /** @var string $url */
         $url = "http://10.211.55.7/phplist.zip";
-        $zipFile = tmpfile();
+        $zipFile = tempnam(sys_get_temp_dir(), 'phplist-update');
         if ($zipFile===false){
-            throw new UpdateException("File cannot be downloaded");
+            throw new UpdateException("Temporary file cannot be created");
         }
         // Get The Zip File From Server
         $ch = curl_init();
@@ -337,7 +344,7 @@ class updater
         curl_setopt($ch, CURLOPT_TIMEOUT, 10);
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
-        curl_setopt($ch, CURLOPT_FILE, $zipFile);
+        curl_setopt($ch, CURLOPT_FILE, fopen($zipFile, 'w+'));
         $page = curl_exec($ch);
         if(!$page) {
             echo "Error :- ".curl_error($ch);
@@ -409,30 +416,48 @@ class updater
             '..',
         );
 
-        $excludedFiles = array(
-            'dl.php',
-            'index.php',
-            'index.html',
-            'lt.php',
-            'ut.php',
-        );
 
         if (in_array($file, $excludedFolders)){
             return true;
-        } else if  (in_array($file, $excludedFiles)) {
+        } else if  (in_array($file, $this->excludedFiles)) {
             return true;
         }
         return false;
     }
 
+    /**
+     * @throws UpdateException
+     */
     function moveNewFiles(){
-        $downloadedFiles = scandir(__DIR__ . '/../tmp_uploaded_update');
+        $rootDir = __DIR__ . '/../tmp_uploaded_update/phplist/public_html/lists';
+        $downloadedFiles = scandir($rootDir);
+        if(count($downloadedFiles)<=2){
+            throw new UpdateException("Download folder is empty!");
+        }
 
         foreach ($downloadedFiles as $fileName){
             if ($this->isExcluded($fileName)){
                 continue;
             }
-            rename( __DIR__ . '/../tmp_uploaded_update/'.$fileName, __DIR__ . '/../'.$fileName);
+            $oldFile = $rootDir . '/' . $fileName;
+            $newFile = __DIR__ . '/../' . $fileName;
+            $state = rename($oldFile, $newFile);
+            if($state === false) {
+                throw new UpdateException("Could not move new files");
+            }
+        }
+    }
+
+    function moveEntryPHPpoints(){
+        $rootDir = __DIR__ . '/../tmp_uploaded_update/phplist/public_html/lists';
+        $downloadedFiles = scandir($rootDir);
+
+        foreach ($downloadedFiles as $filename){
+            $oldFile = $rootDir . '/' . $filename;
+            $newFile = __DIR__ . '/../' . $filename;
+            if (in_array($filename,$this->excludedFiles)){
+                rename($oldFile,$newFile);
+            }
         }
 
     }
@@ -472,14 +497,15 @@ class updater
 
     /**
      * Extract Zip Files
-     * @param $toBeExtracted
-     * @param $extractPath
+     * @param string $toBeExtracted
+     * @param string $extractPath
      * @throws UpdateException
      */
     function unZipFiles($toBeExtracted, $extractPath){
         $zip = new ZipArchive;
+
         /* Open the Zip file */
-        if($zip->open($toBeExtracted) !== "true"){
+        if($zip->open($toBeExtracted) !== true){
             throw new \UpdateException("Unable to open the Zip File");
         }
         /* Extract Zip File */
@@ -498,8 +524,11 @@ class updater
 
 try {
     $update = new updater();
-  //  $update->temp_dir();
+    //  $update->temp_dir();
     $update->deleteFiles();
+    $update->downloadUpdate();
+    $update->moveNewFiles();
+    $update->moveEntryPHPpoints();
 //if(!$update->addMaintenanceMode()){
 //    die('There is already an update running');
 //}
@@ -513,7 +542,7 @@ try {
 //$update->backUpFiles('../../../', '../backup.zip');
 
 } catch (\UpdateException $e) {
-    echo $e->getMessage();
+    throw $e;
 }
 
 
