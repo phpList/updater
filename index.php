@@ -531,10 +531,11 @@ class updater
     }
 
     /**
+     * @param $status
      * @param $action
      * @throws UpdateException
      */
-    function writeActions($action)
+    function writeActions($status,$action)
     {
         $actionsdir = __DIR__ . '/../config/actions.txt';
         if (!file_exists($actionsdir)) {
@@ -543,17 +544,43 @@ class updater
                 throw new \UpdateException("Could not create actions file!");
             }
         }
-        $writen = file_put_contents($actionsdir, json_encode("step",$action));
+        $writen = file_put_contents($actionsdir, json_encode(array('continue'=>$status, 'step'=>$action)));
         if($writen===false){
             throw new \UpdateException("Could not write on $actionsdir");
         }
+
+    }
+
+    /**
+     * Return the current step
+     * @return mixed array of json data
+     * @throws UpdateException
+     */
+    function currentUpdateStep(){
+        $actionsdir = __DIR__ . '/../config/actions.txt';
+        if (file_exists($actionsdir)) {
+            $status= file_get_contents($actionsdir);
+            if($status===false){
+                throw new \UpdateException( "Cannot read content from $actionsdir");
+            }
+            $decodedJson = json_decode($status,true);
+            if (!is_array($decodedJson)) {
+                throw new \UpdateException('JSON data cannot be decoded!');
+            }
+
+        } else {
+            throw new \UpdateException($actionsdir.' does not exist!');
+        }
+        return $decodedJson;
 
     }
 }
 
 try {
     $update = new updater();
-    $update->writeActions();
+    $update->writeActions(true,1);
+    $update->writeActions(true,2);
+    $update->writeActions(false,3);
     //  $update->temp_dir();
     // $update->deleteFiles();
     // $update->downloadUpdate();
