@@ -616,6 +616,10 @@ if(isset($_POST['action'])) {
     $action = (int)$_POST['action'];
 
     switch ($action) {
+        case 0:
+            $statusJson= $update->currentUpdateStep();
+            echo json_encode($statusJson);
+            break;
         case 1:
             $unexpectedFiles = $update->checkRequiredFiles();
             if(count($unexpectedFiles) !== 0) {
@@ -645,28 +649,33 @@ if(isset($_POST['action'])) {
 
 
 
-}
-?>
+}else{
+    ?>
 
-<html>
-<head>
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-    <script src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/boo"></script>
-    <script src="update.js"></script>
-</head>
-<body>
+    <html>
+    <head>
 
-<h3>Dynamic Progress Bar</h3>
-<p>Running progress bar from 0% to 100% in 10 seconds</p>
-<div class="progress">
-    <div id="dynamic" class="progress-bar progress-bar-success progress-bar-striped active" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%">
-        <span id="current-progress"></span>
-    </div>
-</div>
+    </head>
+    <body>
+    <script>
+        let req = new XMLHttpRequest();
+        let url = "http://10.211.55.4/phplist-3.3.6/public_html/lists/updater/index.php";
+        req.open('POST', url, true);
+        req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+        req.onload  = function() {
+            console.log (JSON.parse(req.responseText));
+            // do something with jsonResponse
+        };
+        req.send("action=0");
+
+    </script>
+
+    Current step: <span id="current-step"> </span> <br>
 
 
+    <button id="next-step"> Next</button>
 
-</body>
-</html>
+
+    </body>
+    </html>
+<?php } ?>
