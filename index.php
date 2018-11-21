@@ -26,7 +26,8 @@ class updater
      * Return true if there is an update available
      * @return bool
      */
-    public  function availableUpdate(){
+    public function availableUpdate()
+    {
         return $this->availableUpdate;
     }
 
@@ -55,9 +56,9 @@ class updater
         $version = isset($serverResponse['version']) ? $serverResponse['version'] : '';
 
         $versionString = isset($serverResponse['versionstring']) ? $serverResponse['versionstring'] : '';
-        if ($version!== '' && $version !== $this->getCurrentVersion() && version_compare($this->getCurrentVersion(), $version)) {
+        if ($version !== '' && $version !== $this->getCurrentVersion() && version_compare($this->getCurrentVersion(), $version)) {
             $this->availableUpdate = true;
-            $updateMessage = 'Update to the ' . htmlentities($versionString) . ' is available.  ' ;
+            $updateMessage = 'Update to the ' . htmlentities($versionString) . ' is available.  ';
         } else {
             $updateMessage = 'phpList is up-to-date.';
         }
@@ -108,9 +109,9 @@ class updater
     function checkWritePermissions()
     {
 
-        $directory = new \RecursiveDirectoryIterator(__DIR__ . '/../',\RecursiveDirectoryIterator::SKIP_DOTS); // Exclude dot files
+        $directory = new \RecursiveDirectoryIterator(__DIR__ . '/../', \RecursiveDirectoryIterator::SKIP_DOTS); // Exclude dot files
         /** @var SplFileInfo[] $iterator */
-        $iterator = new \RecursiveIteratorIterator($directory, RecursiveIteratorIterator::CHILD_FIRST );
+        $iterator = new \RecursiveIteratorIterator($directory, RecursiveIteratorIterator::CHILD_FIRST);
         $files = array();
         foreach ($iterator as $info) {
             if (!is_writable($info->getRealPath())) {
@@ -203,7 +204,8 @@ class updater
      * @throws UpdateException
      */
 
-    function deleteFiles() {
+    function deleteFiles()
+    {
 
         $excludedFolders = array(
             'config',
@@ -216,9 +218,9 @@ class updater
         $filesTodelete = scandir(__DIR__ . '/../');
 
         foreach ($filesTodelete as $fileName) {
-            $absolutePath = __DIR__.'/../'.$fileName;
+            $absolutePath = __DIR__ . '/../' . $fileName;
             $is_dir = false;
-            if(is_dir($absolutePath)) {
+            if (is_dir($absolutePath)) {
                 $is_dir = true;
                 if (in_array($fileName, $excludedFolders)) {
                     echo "$fileName is excluded<br/>";
@@ -234,7 +236,7 @@ class updater
             }
 
 
-            if($is_dir) {
+            if ($is_dir) {
                 $this->rmdir_recursive($absolutePath);
             } else {
                 unlink($absolutePath);
@@ -247,23 +249,24 @@ class updater
      * Get a PDO connection
      * @return PDO
      */
-    function getConnection(){
+    function getConnection()
+    {
 
-        require __DIR__.'/../../config/config.php';
+        require __DIR__ . '/../../config/config.php';
 
         $charset = 'utf8mb4';
 
         /** @var string $database_host
-         *  @var string $database_name
+         * @var string $database_name
          * @var string $database_user
          * @var string $database_password
          */
 
         $dsn = "mysql:host=$database_host;dbname=$database_name;charset=$charset";
         $options = array(
-            PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            PDO::ATTR_EMULATE_PREPARES   => false,
+            PDO::ATTR_EMULATE_PREPARES => false,
         );
         try {
             $pdo = new PDO($dsn, $database_user, $database_password, $options);
@@ -282,16 +285,16 @@ class updater
         $prepStmt = $this->getConnection()->prepare("SELECT * FROM phplist_config WHERE item=?");
         $prepStmt->execute(array('update_in_progress'));
         $result = $prepStmt->fetch(PDO::FETCH_ASSOC);
-        if($result === false ){
+        if ($result === false) {
             // the row does not exist => no update running
             $this->getConnection()
                 ->prepare('INSERT INTO phplist_config(`item`,`editable`,`value`) VALUES (?,0,?)')
-                ->execute(array('update_in_progress','1'));
-        }elseif ($result['update_in_progress'] == '0'){
+                ->execute(array('update_in_progress', '1'));
+        } elseif ($result['update_in_progress'] == '0') {
             $this->getConnection()
                 ->prepare('UPDATE phplist_config SET `value`=? WHERE `item`=?')
-                ->execute(array('1','update_in_progress'));
-        }else{
+                ->execute(array('1', 'update_in_progress'));
+        } else {
             // the row exists and is not 0 => there is an update running
             return false;
         }
@@ -314,10 +317,9 @@ class updater
 
         $this->getConnection()
             ->prepare('UPDATE phplist_config SET `value`=? WHERE `item`=?')
-            ->execute(array("0","update_in_progress"));
+            ->execute(array("0", "update_in_progress"));
 
     }
-
 
 
     /**
@@ -330,7 +332,7 @@ class updater
         /** @var string $url */
         $url = "http://10.211.55.7/phplist.zip";
         $zipFile = tempnam(sys_get_temp_dir(), 'phplist-update');
-        if ($zipFile===false){
+        if ($zipFile === false) {
             throw new UpdateException("Temporary file cannot be created");
         }
         // Get The Zip File From Server
@@ -340,14 +342,14 @@ class updater
         curl_setopt($ch, CURLOPT_HEADER, 0);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
         curl_setopt($ch, CURLOPT_AUTOREFERER, true);
-        curl_setopt($ch, CURLOPT_BINARYTRANSFER,true);
+        curl_setopt($ch, CURLOPT_BINARYTRANSFER, true);
         curl_setopt($ch, CURLOPT_TIMEOUT, 10);
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
         curl_setopt($ch, CURLOPT_FILE, fopen($zipFile, 'w+'));
         $page = curl_exec($ch);
-        if(!$page) {
-            echo "Error :- ".curl_error($ch);
+        if (!$page) {
+            echo "Error :- " . curl_error($ch);
         }
         curl_close($ch);
 
@@ -360,14 +362,14 @@ class updater
      * Creates temporary dir
      * @throws UpdateException
      */
-    function temp_dir(){
+    function temp_dir()
+    {
 
         $tempdir = mkdir(self::DOWNLOAD_PATH, 0700);
-        if ($tempdir===false){
+        if ($tempdir === false) {
             throw new UpdateException("Could not create temporary file");
         }
     }
-
 
 
     function cleanUp()
@@ -380,22 +382,23 @@ class updater
     /**
      * @throws UpdateException
      */
-    function replacePHPEntryPoints(){
+    function replacePHPEntryPoints()
+    {
         $entryPoints = array(
             'dl.php',
             'index.html',
             'lt.php',
             'ut.php',
         );
-        foreach ($entryPoints as $key=> $fileName){
+        foreach ($entryPoints as $key => $fileName) {
             $entryFile = fopen($fileName, "w");
-            if ($entryFile===FALSE){
-                throw new UpdateException("Could not fopen $fileName") ;
+            if ($entryFile === FALSE) {
+                throw new UpdateException("Could not fopen $fileName");
             }
             $current = "Update in progress \n";
-            $content= file_put_contents($entryFile, $current);
-            if ($content===FALSE){
-                throw new UpdateException("Could not write to the $fileName") ;
+            $content = file_put_contents($entryFile, $current);
+            if ($content === FALSE) {
+                throw new UpdateException("Could not write to the $fileName");
             }
         }
 
@@ -406,7 +409,8 @@ class updater
      * @param $file
      * @return bool
      */
-    function isExcluded($file){
+    function isExcluded($file)
+    {
 
         $excludedFolders = array(
             'config',
@@ -417,9 +421,9 @@ class updater
         );
 
 
-        if (in_array($file, $excludedFolders)){
+        if (in_array($file, $excludedFolders)) {
             return true;
-        } else if  (in_array($file, $this->excludedFiles)) {
+        } else if (in_array($file, $this->excludedFiles)) {
             return true;
         }
         return false;
@@ -428,35 +432,37 @@ class updater
     /**
      * @throws UpdateException
      */
-    function moveNewFiles(){
+    function moveNewFiles()
+    {
         $rootDir = __DIR__ . '/../tmp_uploaded_update/phplist/public_html/lists';
         $downloadedFiles = scandir($rootDir);
-        if(count($downloadedFiles)<=2){
+        if (count($downloadedFiles) <= 2) {
             throw new UpdateException("Download folder is empty!");
         }
 
-        foreach ($downloadedFiles as $fileName){
-            if ($this->isExcluded($fileName)){
+        foreach ($downloadedFiles as $fileName) {
+            if ($this->isExcluded($fileName)) {
                 continue;
             }
             $oldFile = $rootDir . '/' . $fileName;
             $newFile = __DIR__ . '/../' . $fileName;
             $state = rename($oldFile, $newFile);
-            if($state === false) {
+            if ($state === false) {
                 throw new UpdateException("Could not move new files");
             }
         }
     }
 
-    function moveEntryPHPpoints(){
+    function moveEntryPHPpoints()
+    {
         $rootDir = __DIR__ . '/../tmp_uploaded_update/phplist/public_html/lists';
         $downloadedFiles = scandir($rootDir);
 
-        foreach ($downloadedFiles as $filename){
+        foreach ($downloadedFiles as $filename) {
             $oldFile = $rootDir . '/' . $filename;
             $newFile = __DIR__ . '/../' . $filename;
-            if (in_array($filename,$this->excludedFiles)){
-                rename($oldFile,$newFile);
+            if (in_array($filename, $this->excludedFiles)) {
+                rename($oldFile, $newFile);
             }
         }
 
@@ -469,7 +475,8 @@ class updater
      * @param $destination 'path' to backup zip
      * @return bool
      */
-    function backUpFiles($source, $destination) {
+    function backUpFiles($source, $destination)
+    {
         if (extension_loaded('zip') === true) {
             if (file_exists($source) === true) {
                 $zip = new ZipArchive();
@@ -501,11 +508,12 @@ class updater
      * @param string $extractPath
      * @throws UpdateException
      */
-    function unZipFiles($toBeExtracted, $extractPath){
+    function unZipFiles($toBeExtracted, $extractPath)
+    {
         $zip = new ZipArchive;
 
         /* Open the Zip file */
-        if($zip->open($toBeExtracted) !== true){
+        if ($zip->open($toBeExtracted) !== true) {
             throw new \UpdateException("Unable to open the Zip File");
         }
         /* Extract Zip File */
@@ -517,18 +525,40 @@ class updater
     /**
      * @throws UpdateException
      */
-    function recoverFiles(){
+    function recoverFiles()
+    {
         $this->unZipFiles('backup.zip', self::DOWNLOAD_PATH);
+    }
+
+    /**
+     * @param $action
+     * @throws UpdateException
+     */
+    function writeActions($action)
+    {
+        $actionsdir = __DIR__ . '/../config/actions.txt';
+        if (!file_exists($actionsdir)) {
+            $actionsFile = fopen($actionsdir, "w+");
+            if ($actionsFile === false) {
+                throw new \UpdateException("Could not create actions file!");
+            }
+        }
+        $writen = file_put_contents($actionsdir, json_encode("step",$action));
+        if($writen===false){
+            throw new \UpdateException("Could not write on $actionsdir");
+        }
+
     }
 }
 
 try {
     $update = new updater();
+    $update->writeActions();
     //  $update->temp_dir();
-    $update->deleteFiles();
-    $update->downloadUpdate();
-    $update->moveNewFiles();
-    $update->moveEntryPHPpoints();
+    // $update->deleteFiles();
+    // $update->downloadUpdate();
+    //$update->moveNewFiles();
+    //$update->moveEntryPHPpoints();
 //if(!$update->addMaintenanceMode()){
 //    die('There is already an update running');
 //}
