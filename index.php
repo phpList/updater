@@ -615,7 +615,7 @@ try {
 
 /**
  *
- * @ToDo write start and end action functions
+ *
  *
  */
 if(isset($_POST['action'])) {
@@ -628,14 +628,13 @@ if(isset($_POST['action'])) {
     header('Content-Type: application/json');
     switch ($action) {
         case 0:
-
             $statusJson= $update->currentUpdateStep();
             echo json_encode($statusJson);
             break;
         case 1:
             $unexpectedFiles = $update->checkRequiredFiles();
             if(count($unexpectedFiles) !== 0) {
-                echo(json_encode(array('continue' => false, 'response' => $unexpectedFiles)));
+                echo(json_encode(array('continue' => false, 'response' => 'The following directories or files are required or not expected: '.$unexpectedFiles)));
             } else {
                 echo(json_encode(array('continue' => true)));
             }
@@ -643,7 +642,7 @@ if(isset($_POST['action'])) {
         case 2:
             $notWriteableFiles = $update->checkWritePermissions();
             if(count($notWriteableFiles) !== 0) {
-                echo(json_encode(array('continue' => false, 'response' => $notWriteableFiles)));
+                echo(json_encode(array('continue' => false, 'response' => 'The following files cannot be written:'.$notWriteableFiles)));
             } else {
                 echo(json_encode(array('continue' => true)));
             }
@@ -659,7 +658,7 @@ if(isset($_POST['action'])) {
         case 4:
             $on = $update->addMaintenanceMode();
             if($on===false){
-                echo(json_encode(array('continue' => false, 'response' => 'cannot set the maintenance mode on!')));
+                echo(json_encode(array('continue' => false, 'response' => 'Cannot set the maintenance mode on!')));
             } else {
                 echo(json_encode(array('continue' => true)));
             }
@@ -707,7 +706,7 @@ if(isset($_POST['action'])) {
         case 10:
             $off = $update->removeMaintenanceMode();
             if($off===false){
-                echo(json_encode(array('continue' => false, 'response' => 'cannot clear maintenance mode!')));
+                echo(json_encode(array('continue' => false, 'response' => 'Cannot clear maintenance mode!')));
             } else {
                 echo(json_encode(array('continue' => true)));
             }
