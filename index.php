@@ -143,6 +143,7 @@ class updater
             'index.php' => 1,
             'lt.php' => 1,
             'ut.php' => 1,
+            'updater'=>1,
         );
 
         $existingFiles = scandir(__DIR__ . '/../');
@@ -223,13 +224,11 @@ class updater
             if (is_dir($absolutePath)) {
                 $is_dir = true;
                 if (in_array($fileName, $excludedFolders)) {
-                    echo "$fileName is excluded<br/>";
                     continue;
                 }
 
             } else if (is_file($absolutePath)) {
                 if (in_array($fileName, $this->excludedFiles)) {
-                    echo "$fileName is excluded<br/>";
                     continue;
                 }
 
@@ -252,7 +251,7 @@ class updater
     function getConnection()
     {
 
-        require __DIR__ . '/../../config/config.php';
+        require __DIR__ . '/../config/config.php';
 
         $charset = 'utf8mb4';
 
@@ -525,6 +524,17 @@ class updater
     /**
      * @throws UpdateException
      */
+    function deleteTemporaryFiles() {
+        $isTempDirDeleted = $this->rmdir_recursive(self::DOWNLOAD_PATH);
+        if($isTempDirDeleted===false){
+            throw new \UpdateException("Could not delete temporary files!");
+        }
+
+    }
+
+    /**
+     * @throws UpdateException
+     */
     function recoverFiles()
     {
         $this->unZipFiles('backup.zip', self::DOWNLOAD_PATH);
@@ -578,9 +588,9 @@ class updater
 
 try {
     $update = new updater();
-    $update->writeActions(true,1);
-    $update->writeActions(true,2);
-    $update->writeActions(false,3);
+    $update->writeActions(true,0);
+
+
     //  $update->temp_dir();
     // $update->deleteFiles();
     // $update->downloadUpdate();
@@ -615,8 +625,10 @@ if(isset($_POST['action'])) {
 
     $action = (int)$_POST['action'];
 
+    header('Content-Type: application/json');
     switch ($action) {
         case 0:
+
             $statusJson= $update->currentUpdateStep();
             echo json_encode($statusJson);
             break;
@@ -644,7 +656,62 @@ if(isset($_POST['action'])) {
                 echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
             }
             break;
-
+        case 4:
+            $on = $update->addMaintenanceMode();
+            if($on===false){
+                echo(json_encode(array('continue' => false, 'response' => 'cannot set the maintenance mode on!')));
+            } else {
+                echo(json_encode(array('continue' => true)));
+            }
+            break;
+        case 5:
+            try {
+                $update->replacePHPEntryPoints();
+                echo(json_encode(array('continue' => true)));
+            } catch (\Exception $e) {
+                echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
+            }
+            break;
+        case 6:
+            try {
+                $update->deleteFiles();
+                echo(json_encode(array('continue' => true)));
+            } catch (\Exception $e) {
+                echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
+            }
+            break;
+        case 7:
+            try {
+                $update->moveNewFiles();
+                echo(json_encode(array('continue' => true)));
+            } catch (\Exception $e) {
+                echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
+            }
+            break;
+        case 8:
+            try {
+                $update->moveEntryPHPpoints();
+                echo(json_encode(array('continue' => true)));
+            } catch (\Exception $e) {
+                echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
+            }
+            break;
+        case 9:
+            try {
+                $update->deleteTemporaryFiles();
+                echo(json_encode(array('continue' => true)));
+            } catch (\Exception $e) {
+                echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
+            }
+            break;
+        case 10:
+            $off = $update->removeMaintenanceMode();
+            if($off===false){
+                echo(json_encode(array('continue' => false, 'response' => 'cannot clear maintenance mode!')));
+            } else {
+                echo(json_encode(array('continue' => true)));
+            }
+            break;
     };
 
 
@@ -657,25 +724,51 @@ if(isset($_POST['action'])) {
 
     </head>
     <body>
-    <script>
-        let req = new XMLHttpRequest();
-        let url = "http://10.211.55.4/phplist-3.3.6/public_html/lists/updater/index.php";
-        req.open('POST', url, true);
-        req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-        req.onload  = function() {
-            console.log (JSON.parse(req.responseText));
-            // do something with jsonResponse
-        };
-        req.send("action=0");
+    <span>
 
-    </script>
 
     Current step: <span id="current-step"> </span> <br>
+    <span id="error-message" </span><br>
 
 
     <button id="next-step"> Next</button>
 
+    <script>
 
+        function takeAction(action, callback) {
+            let req = new XMLHttpRequest();
+            let url = "http://10.211.55.4/phplist-3.3.6/public_html/lists/updater/index.php"; //@TODO  define url later
+            req.open('POST', url, true);
+            req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+            req.onload  = callback;
+            req.send("action="+action);
+
+        }
+
+        takeAction(0,function () {
+            setCurrentStep(JSON.parse(this.responseText).step);
+        })
+
+        function setCurrentStep(action){
+            document.getElementById("current-step").innerText=action;
+        }
+        function showErrorMessage(error){
+            document.getElementById("error-message").innerText=error;
+        }
+
+        document.getElementById("next-step").addEventListener("click",function () {
+            let nextStep = parseInt(document.getElementById("current-step").innerText)+1;
+            takeAction(nextStep, function () {
+                let continueResponse= JSON.parse(this.responseText).continue;
+                if (continueResponse===true) {
+                    setCurrentStep(nextStep);
+                } else { showErrorMessage("Failed!");
+
+                }
+            });
+        });
+
+    </script>
     </body>
     </html>
 <?php } ?>
