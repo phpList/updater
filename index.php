@@ -1,6 +1,6 @@
 <?php
 /**
- * One click updater for phpList 3
+ * Automatic updater for phpList 3
  * @author Xheni Myrtaj <xheni@phplist.com>
  *
  */
@@ -35,14 +35,20 @@ class updater
      * Returns current version of phpList.
      *
      * @return string
+     * @throws UpdateException
      */
     public function getCurrentVersion()
     {
-        $jsonVersion = file_get_contents('version.json');
-        $decodedVersion = json_decode($jsonVersion, true);
-        $currentVersion = isset($decodedVersion['version']) ? $decodedVersion['version'] : '';
+        $version = file_get_contents('../admin/init.php');
+        $matches = array();
+        preg_match_all('/define\(\"VERSION\",\"(.*)\"\);/', $version,$matches);
 
-        return $currentVersion;
+        if(isset($matches[1][0])) {
+            return $matches[1][0];
+        }
+
+        throw new UpdateException('No production version found.');
+
     }
 
     /**
@@ -288,17 +294,19 @@ class updater
             // the row does not exist => no update running
             $this->getConnection()
                 ->prepare('INSERT INTO phplist_config(`item`,`editable`,`value`) VALUES (?,0,?)')
-                ->execute(array('update_in_progress', '1'));
-        } elseif ($result['update_in_progress'] == '0') {
+                ->execute(array('update_in_progress', 1));
+        }
+        if ($result['update_in_progress'] == 0) {
             $this->getConnection()
                 ->prepare('UPDATE phplist_config SET `value`=? WHERE `item`=?')
-                ->execute(array('1', 'update_in_progress'));
+                ->execute(array(1, 'update_in_progress'));
+
         } else {
             // the row exists and is not 0 => there is an update running
             return false;
         }
         $name = 'maintenancemode';
-        $value = "Update process ";
+        $value = "Update process";
         $sql = "UPDATE phplist_config SET value =?, editable =? where item =? ";
         $this->getConnection()->prepare($sql)->execute(array($value, 0, $name));
 
@@ -316,7 +324,7 @@ class updater
 
         $this->getConnection()
             ->prepare('UPDATE phplist_config SET `value`=? WHERE `item`=?')
-            ->execute(array("0", "update_in_progress"));
+            ->execute(array(0, "update_in_progress"));
 
     }
 
@@ -392,12 +400,8 @@ class updater
         );
 
         foreach ($entryPoints as $key => $fileName) {
-            $entryFile = fopen($fileName, "w");
-            if ($entryFile === FALSE) {
-                throw new UpdateException("Could not fopen $fileName");
-            }
             $current = "Update in progress \n";
-            $content = file_put_contents($entryFile, $current);
+            $content = file_put_contents(__DIR__.'/../'.$fileName, $current);
             if ($content === FALSE) {
                 throw new UpdateException("Could not write to the $fileName");
             }
@@ -476,8 +480,9 @@ class updater
      * @param $destination 'path' to backup zip
      * @return bool
      */
-    function backUpFiles($source, $destination)
+    function backUpFiles($destination)
     {
+        $source = __DIR__ . '/../../';
         if (extension_loaded('zip') === true) {
             if (file_exists($source) === true) {
                 $zip = new ZipArchive();
@@ -501,6 +506,10 @@ class updater
             }
         }
         return false;
+    }
+
+    function askForBackUpDestination(){
+
     }
 
     /**
@@ -631,91 +640,135 @@ if(isset($_POST['action'])) {
     switch ($action) {
         case 0:
             $statusJson= $update->currentUpdateStep();
-            echo json_encode($statusJson);
+            echo json_encode(array('status' => $statusJson,'autocontinue'=>true ));
             break;
         case 1:
-            $unexpectedFiles = $update->checkRequiredFiles();
-            if(count($unexpectedFiles) !== 0) {
-                echo(json_encode(array('continue' => false, 'response' => $unexpectedFiles)));
+            $currentVersion = $update->getCurrentVersion();
+            $updateMessage= $update->checkIfThereIsAnUpdate();
+            $isThereAnUpdate = $update->availableUpdate();
+            if($isThereAnUpdate===false){
+                echo(json_encode(array('continue' => false, 'response' => $updateMessage)));
             } else {
-                echo(json_encode(array('continue' => true)));
+                echo(json_encode(array('continue' => true,'response'=>$updateMessage)));
             }
+
             break;
         case 2:
-            $notWriteableFiles = $update->checkWritePermissions();
-            if(count($notWriteableFiles) !== 0) {
-                echo(json_encode(array('continue' => false, 'response' => $notWriteableFiles)));
+            $unexpectedFiles = $update->checkRequiredFiles();
+            if(count($unexpectedFiles) !== 0) {
+                $elements = "The following files are not expected or are required: \n";;
+                foreach ($unexpectedFiles as $key=>$fileName){
+                    $elements.=$key."\n";
+                }
+                echo(json_encode(array('continue' => false, 'response' => $elements)));
             } else {
-                echo(json_encode(array('continue' => true)));
+                echo(json_encode(array('continue' => true,'response'=>'', 'autocontinue'=>true)));
             }
             break;
         case 3:
-            try {
-                $update->downloadUpdate();
-                echo(json_encode(array('continue' => true)));
-            } catch (\Exception $e) {
-                echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
+            $notWriteableFiles = $update->checkWritePermissions();
+            if(count($notWriteableFiles) !== 0) {
+                $notWriteableElements = "No write permission for the following files: \n";;
+                foreach ($notWriteableFiles as $key=>$fileName){
+                    $elements.=$fileName."\n";
+                }
+                echo(json_encode(array('continue' => false, 'response' => $notWriteableElements)));
+            } else {
+                echo(json_encode(array('continue' => true,'response'=>'', 'autocontinue'=>true)));
             }
             break;
         case 4:
-            $on = $update->addMaintenanceMode();
-            if($on===false){
-                echo(json_encode(array('continue' => false, 'response' => 'Cannot set the maintenance mode on!')));
-            } else {
-                echo(json_encode(array('continue' => true)));
-            }
+            echo(json_encode(array('continue' => true, 'response' => 'Do you want a backup? <form><input type="radio" name="create_backup" value="true">Yes<br><input type="radio" name="create_backup" value="false" checked>No</form>')));
             break;
         case 5:
-            try {
-                $update->replacePHPEntryPoints();
-                echo(json_encode(array('continue' => true)));
-            } catch (\Exception $e) {
-                echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
+            $createBackup = $_POST['create_backup'];
+            if($createBackup === 'true') {
+                echo(json_encode(array('continue' => true, 'response' => 'Choose location where to backup <form><input type="text" name="backup_location" placeholder="/tmp/…" /></form>')));
+            } else {
+                echo(json_encode(array('continue' => true, 'autocontinue'=>true)));
             }
             break;
         case 6:
-            try {
-                $update->deleteFiles();
-                echo(json_encode(array('continue' => true)));
-            } catch (\Exception $e) {
-                echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
+            $createBackup = $_POST['create_backup'];
+            if($createBackup === 'true') {
+                $backupLocation = $_POST['backup_location'];
+                try {
+                    $update->backUpFiles($backupLocation);
+                    echo(json_encode(array('continue' => true, 'response' => 'Backup has been created')));
+                } catch (\Exception $e) {
+                    echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
+
+                }
+            } else {
+                echo(json_encode(array('continue' => true,'response'=>'', 'autocontinue'=>true)));
             }
+
             break;
         case 7:
             try {
-                $update->moveNewFiles();
-                echo(json_encode(array('continue' => true)));
+                $update->downloadUpdate();
+                echo(json_encode(array('continue' => true, 'response' =>'The update has been downloaded!')));
             } catch (\Exception $e) {
                 echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
             }
             break;
         case 8:
-            try {
-                $update->moveEntryPHPpoints();
-                echo(json_encode(array('continue' => true)));
-            } catch (\Exception $e) {
-                echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
+            $on = $update->addMaintenanceMode();
+            if($on===false){
+                echo(json_encode(array('continue' => false, 'response' => 'Cannot set the maintenance mode on!')));
+            } else {
+                echo(json_encode(array('continue' => true,'response'=>'Set maintenance mode on', 'autocontinue'=>true)));
             }
             break;
         case 9:
             try {
-                $update->deleteTemporaryFiles();
-                echo(json_encode(array('continue' => true)));
+                $update->replacePHPEntryPoints();
+                echo(json_encode(array('continue' => true,'response'=>'Replaced entry points', 'autocontinue'=>true)));
             } catch (\Exception $e) {
                 echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
             }
             break;
         case 10:
             try {
+                $update->deleteFiles();
+                echo(json_encode(array('continue' => true,'response'=>'Old files have been deleted!','autocontinue'=>true)));
+            } catch (\Exception $e) {
+                echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
+            }
+            break;
+        case 11:
+            try {
+                $update->moveNewFiles();
+                echo(json_encode(array('continue' => true, 'response' =>'Moved new files in place!','autocontinue'=>true)));
+            } catch (\Exception $e) {
+                echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
+            }
+            break;
+        case 12:
+            try {
+                $update->moveEntryPHPpoints();
+                echo(json_encode(array('continue' => true,'response'=>'Moved new entry points in place!','autocontinue'=>true)));
+            } catch (\Exception $e) {
+                echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
+            }
+            break;
+        case 13:
+            try {
+                $update->deleteTemporaryFiles();
+                echo(json_encode(array('continue' => true, 'response'=>'Deleted temporary files!','autocontinue'=>true)));
+            } catch (\Exception $e) {
+                echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
+            }
+            break;
+        case 14:
+            try {
                 $update->removeMaintenanceMode();
-                echo(json_encode(array('continue' => true)));
+                echo(json_encode(array('continue' => true, 'response'=>'Removed maintenance mode')));
             } catch (\Exception $e) {
                 echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
             }
             break;
     };
-
-
 
 }else{
     ?>
@@ -907,7 +960,7 @@ if(isset($_POST['action'])) {
             <h1>Updating phpList to the latest version</h1>
         </div>
         <div id="steps">
-            <div id="first-step"></div>
+            <div id="first-step"> </div>
             <div class="step">
                 <div class="step-image active">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 23.015 21.33">
@@ -950,7 +1003,7 @@ if(isset($_POST['action'])) {
                 </div>
                 <hr class="divider" />
                 <div class="clear"></div>
-                <h2>Download</h2>
+                <h2>Back Up</h2>
             </div>
             <div class="step">
                 <div class="step-image">
@@ -972,7 +1025,7 @@ if(isset($_POST['action'])) {
                 </div>
                 <hr class="divider" />
                 <div class="clear"></div>
-                <h2>Back Up</h2>
+                <h2>Download</h2>
             </div>
             <div class="step last-step">
                 <div class="step-image">
@@ -998,31 +1051,40 @@ if(isset($_POST['action'])) {
             <div class="clear"></div>
         </div>
         <div id="display">
-            Initializing<br/>
-            Current version is: <br/>
-            Update to phpList  available.<br/>
+            Current step: <span id="current-step"> </span> <br>
+            <span id="success-message"></span><br>
+            <span id="error-message"></span><br>
         </div>
-        <button class="right">Go to dashboard</button>
+        <button id="next-step" class="right">Next</button>
     </div>
-    <span> Current step: <span id="current-step"> </span> <br>
-    <span id="error-message" </span><br>
-    <button id="next-step"> Next</button>
+
     </body>
 
     <script>
-
-        function takeAction(action, callback) {
+        let previousFormActions = null;
+        function takeAction(action, formValues, callback) {
             let req = new XMLHttpRequest();
             let url = "<?php echo htmlentities( $_SERVER['REQUEST_URI'] )?>";
             req.open('POST', url, true);
             req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
             req.onload  = callback;
-            req.send("action="+action);
 
+            let body = "action=" + action;
+
+            if (previousFormActions !== null) {
+                body = body + "&" + previousFormActions;
+            }
+            if(formValues) {
+                body = body + "&" + formValues;
+                previousFormActions = previousFormActions + "&" + formValues;
+            }
+
+            req.send(body);
         }
 
-        takeAction(0,function () {
-            setCurrentStep(JSON.parse(this.responseText).step);
+        takeAction(0, null, function () {
+            setCurrentStep(JSON.parse(this.responseText).status.step);
+            executeNextStep();
         });
 
         function setCurrentStep(action){
@@ -1031,17 +1093,61 @@ if(isset($_POST['action'])) {
         function showErrorMessage(error){
             document.getElementById("error-message").innerText=error;
         }
+        function showSuccessMessage(success){
+            document.getElementById("success-message").innerHTML=success;
+        }
 
-        document.getElementById("next-step").addEventListener("click",function () {
+        function setCurrentActionItem(step) {
+            const stepActionMap = {
+                1: 0,
+                2: 0,
+                3: 0,
+                4: 1,
+                5: 1,
+                6: 1,
+                7: 2,
+                8: 3,
+                9: 3,
+                10: 3,
+                11: 3,
+                12: 3,
+                13: 3,
+                14: 3,
+            };
+
+            let steps = document.querySelectorAll('.step-image');
+            steps.forEach(function(element) {
+                element.classList.remove('active');
+            });
+            steps[stepActionMap[step]].classList.add('active');
+
+            return stepActionMap[step];
+        }
+
+        function executeNextStep(formParams) {
             let nextStep = parseInt(document.getElementById("current-step").innerText)+1;
-            takeAction(nextStep, function () {
-                let continueResponse= JSON.parse(this.responseText).continue;
+            setCurrentActionItem(nextStep);
+            document.getElementById('next-step').disabled = true;
+            takeAction(nextStep, formParams, function () {
+                let continueResponse = JSON.parse(this.responseText).continue;
+                let responseMessage = JSON.parse(this.responseText).response;
+                let autocontinue = JSON.parse(this.responseText).autocontinue;
                 if (continueResponse===true) {
+                    showSuccessMessage(responseMessage);
                     setCurrentStep(nextStep);
-                } else { showErrorMessage("Failed!");
-
+                    document.getElementById('next-step').disabled = false;
+                    if (autocontinue===true){
+                        executeNextStep();
+                    }
+                } else {
+                    showErrorMessage(responseMessage);
                 }
             });
+        }
+
+        document.getElementById("next-step").addEventListener("click",function () {
+            let formParams = new URLSearchParams(new FormData(document.querySelector('form'))).toString();
+            executeNextStep(formParams);
         });
 
     </script>
