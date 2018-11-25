@@ -35,14 +35,20 @@ class updater
      * Returns current version of phpList.
      *
      * @return string
+     * @throws UpdateException
      */
     public function getCurrentVersion()
     {
-        $jsonVersion = file_get_contents('version.json');
-        $decodedVersion = json_decode($jsonVersion, true);
-        $currentVersion = isset($decodedVersion['version']) ? $decodedVersion['version'] : '';
+        $version = file_get_contents('../admin/init.php');
+        $matches = array();
+        preg_match_all('/define\(\"VERSION\",\"(.*)\"\);/', $version,$matches);
 
-        return $currentVersion;
+        if(isset($matches[1][0])) {
+            return $matches[1][0];
+        }
+
+        throw new UpdateException('No production version found.');
+
     }
 
     /**
@@ -386,9 +392,11 @@ class updater
         $entryPoints = array(
             'dl.php',
             'index.html',
+            'index.php',
             'lt.php',
             'ut.php',
         );
+
         foreach ($entryPoints as $key => $fileName) {
             $entryFile = fopen($fileName, "w");
             if ($entryFile === FALSE) {
@@ -558,7 +566,6 @@ class updater
         if($writen===false){
             throw new \UpdateException("Could not write on $actionsdir");
         }
-
     }
 
     /**
@@ -588,14 +595,15 @@ class updater
 
 try {
     $update = new updater();
-    $update->writeActions(true,0);
+
+
 
 
     //  $update->temp_dir();
     // $update->deleteFiles();
     // $update->downloadUpdate();
     //$update->moveNewFiles();
-    //$update->moveEntryPHPpoints();
+    //$update->replacePHPEntryPoints();
 //if(!$update->addMaintenanceMode()){
 //    die('There is already an update running');
 //}
@@ -632,22 +640,33 @@ if(isset($_POST['action'])) {
             echo json_encode($statusJson);
             break;
         case 1:
-            $unexpectedFiles = $update->checkRequiredFiles();
-            if(count($unexpectedFiles) !== 0) {
-                echo(json_encode(array('continue' => false, 'response' => 'The following directories or files are required or not expected: '.$unexpectedFiles)));
+            $currentVersion = $update->getCurrentVersion();
+            $updateMessage= $update->checkIfThereIsAnUpdate();
+            $isThereAnUpdate = $update->availableUpdate();
+            if($isThereAnUpdate===false){
+                echo(json_encode(array('continue' => false, 'response' => 'There is no update available.')));
             } else {
-                echo(json_encode(array('continue' => true)));
+                echo(json_encode(array('continue' => true,'response'=>$updateMessage)));
             }
+
             break;
         case 2:
-            $notWriteableFiles = $update->checkWritePermissions();
-            if(count($notWriteableFiles) !== 0) {
-                echo(json_encode(array('continue' => false, 'response' => 'The following files cannot be written:'.$notWriteableFiles)));
+            $unexpectedFiles = $update->checkRequiredFiles();
+            if(count($unexpectedFiles) !== 0) {
+                echo(json_encode(array('continue' => false, 'response' => $unexpectedFiles)));
             } else {
                 echo(json_encode(array('continue' => true)));
             }
             break;
         case 3:
+            $notWriteableFiles = $update->checkWritePermissions();
+            if(count($notWriteableFiles) !== 0) {
+                echo(json_encode(array('continue' => false, 'response' => $notWriteableFiles)));
+            } else {
+                echo(json_encode(array('continue' => true)));
+            }
+            break;
+        case 4:
             try {
                 $update->downloadUpdate();
                 echo(json_encode(array('continue' => true)));
@@ -655,7 +674,7 @@ if(isset($_POST['action'])) {
                 echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
             }
             break;
-        case 4:
+        case 5:
             $on = $update->addMaintenanceMode();
             if($on===false){
                 echo(json_encode(array('continue' => false, 'response' => 'Cannot set the maintenance mode on!')));
@@ -663,7 +682,7 @@ if(isset($_POST['action'])) {
                 echo(json_encode(array('continue' => true)));
             }
             break;
-        case 5:
+        case 6:
             try {
                 $update->replacePHPEntryPoints();
                 echo(json_encode(array('continue' => true)));
@@ -671,7 +690,7 @@ if(isset($_POST['action'])) {
                 echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
             }
             break;
-        case 6:
+        case 7:
             try {
                 $update->deleteFiles();
                 echo(json_encode(array('continue' => true)));
@@ -679,7 +698,7 @@ if(isset($_POST['action'])) {
                 echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
             }
             break;
-        case 7:
+        case 8:
             try {
                 $update->moveNewFiles();
                 echo(json_encode(array('continue' => true)));
@@ -687,7 +706,7 @@ if(isset($_POST['action'])) {
                 echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
             }
             break;
-        case 8:
+        case 9:
             try {
                 $update->moveEntryPHPpoints();
                 echo(json_encode(array('continue' => true)));
@@ -695,7 +714,7 @@ if(isset($_POST['action'])) {
                 echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
             }
             break;
-        case 9:
+        case 10:
             try {
                 $update->deleteTemporaryFiles();
                 echo(json_encode(array('continue' => true)));
@@ -703,12 +722,12 @@ if(isset($_POST['action'])) {
                 echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
             }
             break;
-        case 10:
-            $off = $update->removeMaintenanceMode();
-            if($off===false){
-                echo(json_encode(array('continue' => false, 'response' => 'Cannot clear maintenance mode!')));
-            } else {
+        case 11:
+            try {
+                $update->removeMaintenanceMode();
                 echo(json_encode(array('continue' => true)));
+            } catch (\Exception $e) {
+                echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
             }
             break;
     };
@@ -720,23 +739,297 @@ if(isset($_POST['action'])) {
 
     <html>
     <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro" rel="stylesheet">
 
+        <style>
+            /* http://meyerweb.com/eric/tools/css/reset/
+               v2.0 | 20110126
+               License: none (public domain)
+            */
+            html, body, div, span, applet, object, iframe,
+            h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+            a, abbr, acronym, address, big, cite, code,
+            del, dfn, em, img, ins, kbd, q, s, samp,
+            small, strike, strong, sub, sup, tt, var,
+            b, u, i, center,
+            dl, dt, dd, ol, ul, li,
+            fieldset, form, label, legend,
+            table, caption, tbody, tfoot, thead, tr, th, td,
+            article, aside, canvas, details, embed,
+            figure, figcaption, footer, header, hgroup,
+            menu, nav, output, ruby, section, summary,
+            time, mark, audio, video {
+                margin: 0;
+                padding: 0;
+                border: 0;
+                font-size: 100%;
+                font: inherit;
+                vertical-align: baseline;
+            }
+            /* HTML5 display-role reset for older browsers */
+            article, aside, details, figcaption, figure,
+            footer, header, hgroup, menu, nav, section {
+                display: block;
+            }
+            body {
+                line-height: 1;
+            }
+            ol, ul {
+                list-style: none;
+            }
+            blockquote, q {
+                quotes: none;
+            }
+            blockquote:before, blockquote:after,
+            q:before, q:after {
+                content: '';
+                content: none;
+            }
+            table {
+                border-collapse: collapse;
+                border-spacing: 0;
+            }
+            /** PHPList CSS **/
+            body {
+                background-color: #eeeeee45;
+                font-family: 'Source Sans Pro', sans-serif;
+                margin-top: 50px;
+            }
+            button {
+                background-color: #F29D71;
+                color: white;
+                border-radius: 55px;
+                height: 40px;
+                padding-left: 30px;
+                padding-right: 30px;
+                font-size: 15px;
+                text-transform: uppercase;
+                margin-top: 20px;
+                border: none;
+            }
+            .right {
+                float: right;
+            }
+            @media only screen and (min-width: 1200px) {
+                #center {
+                    margin: auto;
+                    width: 70%;
+                }
+            }
+            @media only screen and (max-width: 350px) {
+                #steps {
+                    width: 100% !important;
+                }
+            }
+            @media only screen and (max-width: 800px) {
+                #center {
+                    width: 100%;
+                }
+                .divider {
+                    visibility: hidden;
+                }
+            }
+            @media only screen and (min-width: 800px) and (max-width: 1200px) {
+                #center {
+                    margin: auto;
+                    width: 90%;
+                }
+            }
+            #display {
+                background-color: white;
+                padding-left: 20px;
+                padding-top: 20px;
+                padding-bottom: 20px;
+                border-radius: 20px;
+            }
+            #logo {
+                color: #8C8C8C;
+                font-size: 20px;
+                text-align: center;
+                padding-bottom: 50px;
+            }
+            #logo img {
+                margin-bottom: 20px;
+            }
+            #steps h2 {
+                font-size: 15px;
+                color: #8C8C8C;
+                width: 50px;
+                text-align: center;
+                padding-left: 10px;
+            }
+            #steps {
+                width: 80%;
+                margin: auto;
+                padding-bottom: 30px;
+            }
+            #first-step {
+                width: calc((25% - 70px)/2) !important;
+                float: left;
+                height: 1px;
+            }
+            .step {
+                width: 25%;
+                float: left;
+            }
+            .last-step {
+                width: 70px;
+            }
+            .step-image {
+                width: 64px;
+                height: 64px;
+                border-radius: 100px;
+                border: 1px solid #8C8C8C;
+                margin-bottom: 20px;
+                float: left;
+            }
+            .step-image svg {
+                width: 50%;
+                padding-top: 25%;
+                padding-left: 25%;
+            }
+            .active {
+                background-color: lightblue;
+            }
+            .active svg path {
+                fill: white;
+            }
+            .clear {
+                clear: both;
+            }
+            .divider {
+                border: 0.3px solid #8C8C8C;
+                width: inherit;
+                margin-top: 30px;
+            }
+        </style>
     </head>
     <body>
-    <span>
+
+    <div id="center">
+        <div id="logo">
+            <svg width="47.055mm" height="14.361mm" version="1.1" viewBox="0 0 166.73201 50.884" xmlns="http://www.w3.org/2000/svg" >
+                <g transform="translate(-199.83 -209.59)" fill="#8C8C8C">
+                    <path transform="matrix(.9375 0 0 .9375 199.83 209.59)" d="m27.139 0a27.138 27.138 0 0 0 -22.072 11.385l17.771 17.951 6.543-6.5176-3.7148-3.7109-0.064454-0.083984c-0.83947-1.1541-1.2461-2.4403-1.2461-3.9336 0-3.7963 3.0896-6.8848 6.8848-6.8848s6.8828 3.0885 6.8828 6.8848c0 1.6395-0.55599 3.1158-1.6504 4.3926l-0.070312 0.076172-3.2715 3.2617 17.648 17.611a27.138 27.138 0 0 0 3.4961 -13.293 27.138 27.138 0 0 0 -27.137 -27.139zm4.1035 10.855c-2.3371 0-4.2383 1.9003-4.2383 4.2363 0.001067 0.89067 0.21941 1.6238 0.68555 2.2969l3.5684 3.5625 3.2383-3.2285c0.66027-0.784 0.98047-1.6442 0.98047-2.6309 0-2.336-1.8973-4.2363-4.2344-4.2363zm-27.658 2.8438a27.138 27.138 0 0 0 -3.584 13.439 27.138 27.138 0 0 0 27.139 27.137 27.138 27.138 0 0 0 22.23 -11.594l-18.113-17.992-6.5527 6.5273 3.5117 3.5547c0.94187 1.232 1.4395 2.6647 1.4395 4.1484-0.001067 3.7952-3.0896 6.8848-6.8848 6.8848-3.7963 0-6.8848-3.0885-6.8848-6.8848 0-1.2864 0.34507-2.5299 1-3.5977l0.082031-0.13477 3.998-3.9824-17.381-17.506zm19.248 19.385l-3.7637 3.748c-0.35093 0.62293-0.53516 1.3402-0.53516 2.0879 0 2.3339 1.9003 4.2363 4.2363 4.2363s4.2402-1.9003 4.2402-4.2363c0-0.88533-0.28766-1.7151-0.84766-2.4746l-3.3301-3.3613z" stroke-width="1.0667"/>
+                    <path d="m263.24 229.86c1.53-1.693 2.958-2.438 4.997-2.438 5.236 0 7.921 4.556 7.921 9.043s-2.754 9.315-7.921 9.281c-2.144 0-3.671-0.714-4.997-2.176v7.955h-3.06v-23.627h3.06zm4.997 13.132c2.992 0 4.726-3.06 4.726-6.459 0-3.332-1.698-6.323-4.726-6.323-6.969 0-6.969 12.782 0 12.782z"/>
+                    <path d="m282.11 229.86c1.122-2.057 2.89-2.71 4.896-2.71 4.861 0 6.527 3.468 6.527 7.445v10.403h-3.06v-10.403c0-2.55-0.852-4.691-3.47-4.691-2.992 0-4.896 1.802-4.896 4.691v10.403h-3.062v-24.546h3.062z"/>
+                    <path d="m300.24 229.86c1.527-1.693 2.957-2.438 4.997-2.438 5.233 0 7.922 4.556 7.922 9.043s-2.754 9.315-7.922 9.281c-2.144 0-3.672-0.714-4.997-2.176v7.955h-3.062v-23.627h3.062zm4.997 13.132c2.99 0 4.726-3.06 4.726-6.459 0-3.332-1.7-6.323-4.726-6.323-6.969 0-6.969 12.782 0 12.782z"/>
+                    <path d="m316.81 245v-24.546h3.229v21.622h12.341v2.924z"/>
+                    <path d="m334.68 223.88v-3.434h3.4v3.434zm0.17 21.112v-17.372h3.061v17.372z"/>
+                    <path d="m340.85 239.01h3.195c0.17 2.584 1.77 3.773 3.738 3.773 2.006 0 3.943-0.918 3.943-2.754 0-0.884-0.512-1.428-1.395-1.835-0.477-0.204-1.02-0.374-1.633-0.545-3.16-0.781-7.785-1.121-7.785-5.371 0-3.808 3.469-4.861 6.562-4.861 3.363 0 6.936 1.462 6.936 6.392h-3.229c0-2.958-1.904-3.672-3.705-3.672-1.734 0-3.332 0.646-3.332 2.142 0 0.714 0.439 1.156 1.395 1.53 0.477 0.204 1.055 0.374 1.664 0.51 0.613 0.136 1.293 0.306 1.975 0.441 2.686 0.646 5.812 1.666 5.812 5.27 0 3.944-3.807 5.474-7.139 5.474-3.5-1e-3 -6.934-2.074-7.002-6.494z"/>
+                    <path d="m359.39 240.17v-9.689h-3.398v-2.55h3.398v-4.521h3.062v4.521h4.113v2.55h-4.113v9.689c0 1.224-0.035 2.753 1.562 2.753 0.309 0 0.613-0.067 0.953-0.102 0.34-0.068 0.682-0.136 1.6-0.238v2.516c-1.09 0.272-1.805 0.408-2.584 0.408-4.253 0-4.593-2.21-4.593-5.337z"/>
+                </g>
+            </svg>
+            <h1>Updating phpList to the latest version</h1>
+        </div>
+        <div id="steps">
+            <div id="first-step"> </div>
+            <div class="step">
+                <div class="step-image active">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 23.015 21.33">
+                        <defs>
+                            <style>
+                                .path {
+                                    fill: #8a9798;
+                                }
+                            </style>
+                        </defs>
+                        <g id="download" transform="translate(0 -17.25)">
+                            <g class="path" transform="translate(0 17.25)">
+                                <path class="cls-1" d="M22.356,228.248a.657.657,0,0,0-.659.659v6a2.959,2.959,0,0,1-2.955,2.955H4.274a2.959,2.959,0,0,1-2.955-2.955v-6.1a.659.659,0,0,0-1.319,0v6.1a4.278,4.278,0,0,0,4.274,4.274H18.741a4.278,4.278,0,0,0,4.274-4.274v-6A.66.66,0,0,0,22.356,228.248Z" transform="translate(0 -217.849)"/>
+                                <path class="path" d="M140.615,33.344a.664.664,0,0,0,.464.2.643.643,0,0,0,.464-.2l4.191-4.191a.66.66,0,1,0-.933-.933l-3.062,3.067V17.909a.659.659,0,1,0-1.319,0V31.288l-3.067-3.067a.66.66,0,0,0-.933.933Z" transform="translate(-129.571 -17.25)"/>
+                            </g>
+                        </g>
+                    </svg>
+                </div>
+                <hr class="divider" />
+                <div class="clear"></div>
+                <h2>Initialize</h2>
+            </div>
+            <div class="step">
+                <div class="step-image ">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 23.015 21.33">
+                        <defs>
+                            <style>
+                                .path {
+                                    fill: #8a9798;
+                                }
+                            </style>
+                        </defs>
+                        <g id="asdf" transform="translate(0 -17.25)">
+                            <g class="path" transform="translate(0 17.25)">
+                                <path class="cls-1" d="M22.356,228.248a.657.657,0,0,0-.659.659v6a2.959,2.959,0,0,1-2.955,2.955H4.274a2.959,2.959,0,0,1-2.955-2.955v-6.1a.659.659,0,0,0-1.319,0v6.1a4.278,4.278,0,0,0,4.274,4.274H18.741a4.278,4.278,0,0,0,4.274-4.274v-6A.66.66,0,0,0,22.356,228.248Z" transform="translate(0 -217.849)"/>
+                                <path class="path" d="M140.615,33.344a.664.664,0,0,0,.464.2.643.643,0,0,0,.464-.2l4.191-4.191a.66.66,0,1,0-.933-.933l-3.062,3.067V17.909a.659.659,0,1,0-1.319,0V31.288l-3.067-3.067a.66.66,0,0,0-.933.933Z" transform="translate(-129.571 -17.25)"/>
+                            </g>
+                        </g>
+                    </svg>
+                </div>
+                <hr class="divider" />
+                <div class="clear"></div>
+                <h2>Download</h2>
+            </div>
+            <div class="step">
+                <div class="step-image">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 23.015 21.33">
+                        <defs>
+                            <style>
+                                .path {
+                                    fill: #8a9798;
+                                }
+                            </style>
+                        </defs>
+                        <g id="foo" transform="translate(0 -17.25)">
+                            <g class="path" transform="translate(0 17.25)">
+                                <path class="cls-1" d="M22.356,228.248a.657.657,0,0,0-.659.659v6a2.959,2.959,0,0,1-2.955,2.955H4.274a2.959,2.959,0,0,1-2.955-2.955v-6.1a.659.659,0,0,0-1.319,0v6.1a4.278,4.278,0,0,0,4.274,4.274H18.741a4.278,4.278,0,0,0,4.274-4.274v-6A.66.66,0,0,0,22.356,228.248Z" transform="translate(0 -217.849)"/>
+                                <path class="path" d="M140.615,33.344a.664.664,0,0,0,.464.2.643.643,0,0,0,.464-.2l4.191-4.191a.66.66,0,1,0-.933-.933l-3.062,3.067V17.909a.659.659,0,1,0-1.319,0V31.288l-3.067-3.067a.66.66,0,0,0-.933.933Z" transform="translate(-129.571 -17.25)"/>
+                            </g>
+                        </g>
+                    </svg>
+                </div>
+                <hr class="divider" />
+                <div class="clear"></div>
+                <h2>Back Up</h2>
+            </div>
+            <div class="step last-step">
+                <div class="step-image">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 23.015 21.33">
+                        <defs>
+                            <style>
+                                .path {
+                                    fill: #8a9798;
+                                }
+                            </style>
+                        </defs>
+                        <g id="bar" transform="translate(0 -17.25)">
+                            <g class="path" transform="translate(0 17.25)">
+                                <path class="cls-1" d="M22.356,228.248a.657.657,0,0,0-.659.659v6a2.959,2.959,0,0,1-2.955,2.955H4.274a2.959,2.959,0,0,1-2.955-2.955v-6.1a.659.659,0,0,0-1.319,0v6.1a4.278,4.278,0,0,0,4.274,4.274H18.741a4.278,4.278,0,0,0,4.274-4.274v-6A.66.66,0,0,0,22.356,228.248Z" transform="translate(0 -217.849)"/>
+                                <path class="path" d="M140.615,33.344a.664.664,0,0,0,.464.2.643.643,0,0,0,.464-.2l4.191-4.191a.66.66,0,1,0-.933-.933l-3.062,3.067V17.909a.659.659,0,1,0-1.319,0V31.288l-3.067-3.067a.66.66,0,0,0-.933.933Z" transform="translate(-129.571 -17.25)"/>
+                            </g>
+                        </g>
+                    </svg>
+                </div>
+                <div class="clear"></div>
+                <h2>Perform update</h2>
+            </div>
+            <div class="clear"></div>
+        </div>
+        <div id="display">
+             <span> Current step: <span id="current-step"> </span> <br>
+                 <span id="success-message" </span><br>
+            <span id="error-message" </span><br>
+        </div>
+        <button id="next-step" class="right">Next</button>
+    </div>
 
 
-    Current step: <span id="current-step"> </span> <br>
-    <span id="error-message" </span><br>
-
-
-    <button id="next-step"> Next</button>
+    </body>
 
     <script>
 
         function takeAction(action, callback) {
             let req = new XMLHttpRequest();
-            let url = "http://10.211.55.4/phplist-3.3.6/public_html/lists/updater/index.php"; //@TODO  define url later
+            let url = "<?php echo htmlentities( $_SERVER['REQUEST_URI'] )?>";
             req.open('POST', url, true);
             req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
             req.onload  = callback;
@@ -746,7 +1039,7 @@ if(isset($_POST['action'])) {
 
         takeAction(0,function () {
             setCurrentStep(JSON.parse(this.responseText).step);
-        })
+        });
 
         function setCurrentStep(action){
             document.getElementById("current-step").innerText=action;
@@ -754,13 +1047,20 @@ if(isset($_POST['action'])) {
         function showErrorMessage(error){
             document.getElementById("error-message").innerText=error;
         }
+        function showSuccessMessage(success){
+            document.getElementById("success-message").innerText=success;
+        }
 
         document.getElementById("next-step").addEventListener("click",function () {
             let nextStep = parseInt(document.getElementById("current-step").innerText)+1;
+            document.getElementById('next-step').disabled = true;
             takeAction(nextStep, function () {
-                let continueResponse= JSON.parse(this.responseText).continue;
+                let continueResponse = JSON.parse(this.responseText).continue;
+                let responseMessage = JSON.parse(this.responseText).response;
                 if (continueResponse===true) {
+                    showSuccessMessage(responseMessage);
                     setCurrentStep(nextStep);
+                    document.getElementById('next-step').disabled = false;
                 } else { showErrorMessage("Failed!");
 
                 }
@@ -768,6 +1068,6 @@ if(isset($_POST['action'])) {
         });
 
     </script>
-    </body>
+
     </html>
 <?php } ?>
