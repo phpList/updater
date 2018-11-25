@@ -1,6 +1,6 @@
 <?php
 /**
- * One click updater for phpList 3
+ * Automatic updater for phpList 3
  * @author Xheni Myrtaj <xheni@phplist.com>
  *
  */
@@ -294,17 +294,19 @@ class updater
             // the row does not exist => no update running
             $this->getConnection()
                 ->prepare('INSERT INTO phplist_config(`item`,`editable`,`value`) VALUES (?,0,?)')
-                ->execute(array('update_in_progress', '1'));
-        } elseif ($result['update_in_progress'] == '0') {
+                ->execute(array('update_in_progress', 1));
+        }
+        if ($result['update_in_progress'] == 0) {
             $this->getConnection()
                 ->prepare('UPDATE phplist_config SET `value`=? WHERE `item`=?')
-                ->execute(array('1', 'update_in_progress'));
+                ->execute(array(1, 'update_in_progress'));
+
         } else {
             // the row exists and is not 0 => there is an update running
             return false;
         }
         $name = 'maintenancemode';
-        $value = "Update process ";
+        $value = "Update process";
         $sql = "UPDATE phplist_config SET value =?, editable =? where item =? ";
         $this->getConnection()->prepare($sql)->execute(array($value, 0, $name));
 
@@ -322,7 +324,7 @@ class updater
 
         $this->getConnection()
             ->prepare('UPDATE phplist_config SET `value`=? WHERE `item`=?')
-            ->execute(array("0", "update_in_progress"));
+            ->execute(array(0, "update_in_progress"));
 
     }
 
@@ -398,12 +400,8 @@ class updater
         );
 
         foreach ($entryPoints as $key => $fileName) {
-            $entryFile = fopen($fileName, "w");
-            if ($entryFile === FALSE) {
-                throw new UpdateException("Could not fopen $fileName");
-            }
             $current = "Update in progress \n";
-            $content = file_put_contents($entryFile, $current);
+            $content = file_put_contents(__DIR__.'/../'.$fileName, $current);
             if ($content === FALSE) {
                 throw new UpdateException("Could not write to the $fileName");
             }
@@ -482,8 +480,9 @@ class updater
      * @param $destination 'path' to backup zip
      * @return bool
      */
-    function backUpFiles($source, $destination)
+    function backUpFiles($destination)
     {
+        $source = __DIR__ . '/../../';
         if (extension_loaded('zip') === true) {
             if (file_exists($source) === true) {
                 $zip = new ZipArchive();
@@ -507,6 +506,10 @@ class updater
             }
         }
         return false;
+    }
+
+    function askForBackUpDestination(){
+
     }
 
     /**
@@ -637,14 +640,14 @@ if(isset($_POST['action'])) {
     switch ($action) {
         case 0:
             $statusJson= $update->currentUpdateStep();
-            echo json_encode($statusJson);
+            echo json_encode(array('status' => $statusJson,'autocontinue'=>true ));
             break;
         case 1:
             $currentVersion = $update->getCurrentVersion();
             $updateMessage= $update->checkIfThereIsAnUpdate();
             $isThereAnUpdate = $update->availableUpdate();
             if($isThereAnUpdate===false){
-                echo(json_encode(array('continue' => false, 'response' => 'There is no update available.')));
+                echo(json_encode(array('continue' => false, 'response' => $updateMessage)));
             } else {
                 echo(json_encode(array('continue' => true,'response'=>$updateMessage)));
             }
@@ -653,88 +656,119 @@ if(isset($_POST['action'])) {
         case 2:
             $unexpectedFiles = $update->checkRequiredFiles();
             if(count($unexpectedFiles) !== 0) {
-                echo(json_encode(array('continue' => false, 'response' => $unexpectedFiles)));
+                $elements = "The following files are not expected or are required: \n";;
+                foreach ($unexpectedFiles as $key=>$fileName){
+                    $elements.=$key."\n";
+                }
+                echo(json_encode(array('continue' => false, 'response' => $elements)));
             } else {
-                echo(json_encode(array('continue' => true)));
+                echo(json_encode(array('continue' => true,'response'=>'', 'autocontinue'=>true)));
             }
             break;
         case 3:
             $notWriteableFiles = $update->checkWritePermissions();
             if(count($notWriteableFiles) !== 0) {
-                echo(json_encode(array('continue' => false, 'response' => $notWriteableFiles)));
+                $notWriteableElements = "No write permission for the following files: \n";;
+                foreach ($notWriteableFiles as $key=>$fileName){
+                    $elements.=$fileName."\n";
+                }
+                echo(json_encode(array('continue' => false, 'response' => $notWriteableElements)));
             } else {
-                echo(json_encode(array('continue' => true)));
+                echo(json_encode(array('continue' => true,'response'=>'', 'autocontinue'=>true)));
             }
             break;
         case 4:
-            try {
-                $update->downloadUpdate();
-                echo(json_encode(array('continue' => true)));
-            } catch (\Exception $e) {
-                echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
-            }
+            echo(json_encode(array('continue' => true, 'response' => 'Do you want a backup? <form><input type="radio" name="create_backup" value="true">Yes<br><input type="radio" name="create_backup" value="false" checked>No</form>')));
             break;
         case 5:
-            $on = $update->addMaintenanceMode();
-            if($on===false){
-                echo(json_encode(array('continue' => false, 'response' => 'Cannot set the maintenance mode on!')));
+            $createBackup = $_POST['create_backup'];
+            if($createBackup === 'true') {
+                echo(json_encode(array('continue' => true, 'response' => 'Choose location where to backup <form><input type="text" name="backup_location" placeholder="/tmp/…" /></form>')));
             } else {
-                echo(json_encode(array('continue' => true)));
+                echo(json_encode(array('continue' => true, 'autocontinue'=>true)));
             }
             break;
         case 6:
-            try {
-                $update->replacePHPEntryPoints();
-                echo(json_encode(array('continue' => true)));
-            } catch (\Exception $e) {
-                echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
+            $createBackup = $_POST['create_backup'];
+            if($createBackup === 'true') {
+                $backupLocation = $_POST['backup_location'];
+                try {
+                    $update->backUpFiles($backupLocation);
+                    echo(json_encode(array('continue' => true, 'response' => 'Backup has been created')));
+                } catch (\Exception $e) {
+                    echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
+
+                }
+            } else {
+                echo(json_encode(array('continue' => true,'response'=>'', 'autocontinue'=>true)));
             }
+
             break;
         case 7:
             try {
-                $update->deleteFiles();
-                echo(json_encode(array('continue' => true)));
+                $update->downloadUpdate();
+                echo(json_encode(array('continue' => true, 'response' =>'The update has been downloaded!')));
             } catch (\Exception $e) {
                 echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
             }
             break;
         case 8:
-            try {
-                $update->moveNewFiles();
-                echo(json_encode(array('continue' => true)));
-            } catch (\Exception $e) {
-                echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
+            $on = $update->addMaintenanceMode();
+            if($on===false){
+                echo(json_encode(array('continue' => false, 'response' => 'Cannot set the maintenance mode on!')));
+            } else {
+                echo(json_encode(array('continue' => true,'response'=>'Set maintenance mode on', 'autocontinue'=>true)));
             }
             break;
         case 9:
             try {
-                $update->moveEntryPHPpoints();
-                echo(json_encode(array('continue' => true)));
+                $update->replacePHPEntryPoints();
+                echo(json_encode(array('continue' => true,'response'=>'Replaced entry points', 'autocontinue'=>true)));
             } catch (\Exception $e) {
                 echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
             }
             break;
         case 10:
             try {
-                $update->deleteTemporaryFiles();
-                echo(json_encode(array('continue' => true)));
+                $update->deleteFiles();
+                echo(json_encode(array('continue' => true,'response'=>'Old files have been deleted!','autocontinue'=>true)));
             } catch (\Exception $e) {
                 echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
             }
             break;
-
         case 11:
-
+            try {
+                $update->moveNewFiles();
+                echo(json_encode(array('continue' => true, 'response' =>'Moved new files in place!','autocontinue'=>true)));
+            } catch (\Exception $e) {
+                echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
+            }
+            break;
+        case 12:
+            try {
+                $update->moveEntryPHPpoints();
+                echo(json_encode(array('continue' => true,'response'=>'Moved new entry points in place!','autocontinue'=>true)));
+            } catch (\Exception $e) {
+                echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
+            }
+            break;
+        case 13:
+            try {
+                $update->deleteTemporaryFiles();
+                echo(json_encode(array('continue' => true, 'response'=>'Deleted temporary files!','autocontinue'=>true)));
+            } catch (\Exception $e) {
+                echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
+            }
+            break;
+        case 14:
             try {
                 $update->removeMaintenanceMode();
-                echo(json_encode(array('continue' => true)));
+                echo(json_encode(array('continue' => true, 'response'=>'Removed maintenance mode')));
             } catch (\Exception $e) {
                 echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
             }
             break;
     };
-
-
 
 }else{
     ?>
@@ -908,7 +942,6 @@ if(isset($_POST['action'])) {
         </style>
     </head>
     <body>
-<<<<<<< HEAD
 
     <div id="center">
         <div id="logo">
@@ -970,7 +1003,7 @@ if(isset($_POST['action'])) {
                 </div>
                 <hr class="divider" />
                 <div class="clear"></div>
-                <h2>Download</h2>
+                <h2>Back Up</h2>
             </div>
             <div class="step">
                 <div class="step-image">
@@ -992,7 +1025,7 @@ if(isset($_POST['action'])) {
                 </div>
                 <hr class="divider" />
                 <div class="clear"></div>
-                <h2>Back Up</h2>
+                <h2>Download</h2>
             </div>
             <div class="step last-step">
                 <div class="step-image">
@@ -1018,150 +1051,40 @@ if(isset($_POST['action'])) {
             <div class="clear"></div>
         </div>
         <div id="display">
-             <span> Current step: <span id="current-step"> </span> <br>
-                 <span id="success-message" </span><br>
-            <span id="error-message" </span><br>
+            Current step: <span id="current-step"> </span> <br>
+            <span id="success-message"></span><br>
+            <span id="error-message"></span><br>
         </div>
         <button id="next-step" class="right">Next</button>
     </div>
 
-
-=======
-
-    <div id="center">
-        <div id="logo">
-            <svg width="47.055mm" height="14.361mm" version="1.1" viewBox="0 0 166.73201 50.884" xmlns="http://www.w3.org/2000/svg" >
-                <g transform="translate(-199.83 -209.59)" fill="#8C8C8C">
-                    <path transform="matrix(.9375 0 0 .9375 199.83 209.59)" d="m27.139 0a27.138 27.138 0 0 0 -22.072 11.385l17.771 17.951 6.543-6.5176-3.7148-3.7109-0.064454-0.083984c-0.83947-1.1541-1.2461-2.4403-1.2461-3.9336 0-3.7963 3.0896-6.8848 6.8848-6.8848s6.8828 3.0885 6.8828 6.8848c0 1.6395-0.55599 3.1158-1.6504 4.3926l-0.070312 0.076172-3.2715 3.2617 17.648 17.611a27.138 27.138 0 0 0 3.4961 -13.293 27.138 27.138 0 0 0 -27.137 -27.139zm4.1035 10.855c-2.3371 0-4.2383 1.9003-4.2383 4.2363 0.001067 0.89067 0.21941 1.6238 0.68555 2.2969l3.5684 3.5625 3.2383-3.2285c0.66027-0.784 0.98047-1.6442 0.98047-2.6309 0-2.336-1.8973-4.2363-4.2344-4.2363zm-27.658 2.8438a27.138 27.138 0 0 0 -3.584 13.439 27.138 27.138 0 0 0 27.139 27.137 27.138 27.138 0 0 0 22.23 -11.594l-18.113-17.992-6.5527 6.5273 3.5117 3.5547c0.94187 1.232 1.4395 2.6647 1.4395 4.1484-0.001067 3.7952-3.0896 6.8848-6.8848 6.8848-3.7963 0-6.8848-3.0885-6.8848-6.8848 0-1.2864 0.34507-2.5299 1-3.5977l0.082031-0.13477 3.998-3.9824-17.381-17.506zm19.248 19.385l-3.7637 3.748c-0.35093 0.62293-0.53516 1.3402-0.53516 2.0879 0 2.3339 1.9003 4.2363 4.2363 4.2363s4.2402-1.9003 4.2402-4.2363c0-0.88533-0.28766-1.7151-0.84766-2.4746l-3.3301-3.3613z" stroke-width="1.0667"/>
-                    <path d="m263.24 229.86c1.53-1.693 2.958-2.438 4.997-2.438 5.236 0 7.921 4.556 7.921 9.043s-2.754 9.315-7.921 9.281c-2.144 0-3.671-0.714-4.997-2.176v7.955h-3.06v-23.627h3.06zm4.997 13.132c2.992 0 4.726-3.06 4.726-6.459 0-3.332-1.698-6.323-4.726-6.323-6.969 0-6.969 12.782 0 12.782z"/>
-                    <path d="m282.11 229.86c1.122-2.057 2.89-2.71 4.896-2.71 4.861 0 6.527 3.468 6.527 7.445v10.403h-3.06v-10.403c0-2.55-0.852-4.691-3.47-4.691-2.992 0-4.896 1.802-4.896 4.691v10.403h-3.062v-24.546h3.062z"/>
-                    <path d="m300.24 229.86c1.527-1.693 2.957-2.438 4.997-2.438 5.233 0 7.922 4.556 7.922 9.043s-2.754 9.315-7.922 9.281c-2.144 0-3.672-0.714-4.997-2.176v7.955h-3.062v-23.627h3.062zm4.997 13.132c2.99 0 4.726-3.06 4.726-6.459 0-3.332-1.7-6.323-4.726-6.323-6.969 0-6.969 12.782 0 12.782z"/>
-                    <path d="m316.81 245v-24.546h3.229v21.622h12.341v2.924z"/>
-                    <path d="m334.68 223.88v-3.434h3.4v3.434zm0.17 21.112v-17.372h3.061v17.372z"/>
-                    <path d="m340.85 239.01h3.195c0.17 2.584 1.77 3.773 3.738 3.773 2.006 0 3.943-0.918 3.943-2.754 0-0.884-0.512-1.428-1.395-1.835-0.477-0.204-1.02-0.374-1.633-0.545-3.16-0.781-7.785-1.121-7.785-5.371 0-3.808 3.469-4.861 6.562-4.861 3.363 0 6.936 1.462 6.936 6.392h-3.229c0-2.958-1.904-3.672-3.705-3.672-1.734 0-3.332 0.646-3.332 2.142 0 0.714 0.439 1.156 1.395 1.53 0.477 0.204 1.055 0.374 1.664 0.51 0.613 0.136 1.293 0.306 1.975 0.441 2.686 0.646 5.812 1.666 5.812 5.27 0 3.944-3.807 5.474-7.139 5.474-3.5-1e-3 -6.934-2.074-7.002-6.494z"/>
-                    <path d="m359.39 240.17v-9.689h-3.398v-2.55h3.398v-4.521h3.062v4.521h4.113v2.55h-4.113v9.689c0 1.224-0.035 2.753 1.562 2.753 0.309 0 0.613-0.067 0.953-0.102 0.34-0.068 0.682-0.136 1.6-0.238v2.516c-1.09 0.272-1.805 0.408-2.584 0.408-4.253 0-4.593-2.21-4.593-5.337z"/>
-                </g>
-            </svg>
-            <h1>Updating phpList to the latest version</h1>
-        </div>
-        <div id="steps">
-            <div id="first-step"></div>
-            <div class="step">
-                <div class="step-image active">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 23.015 21.33">
-                        <defs>
-                            <style>
-                                .path {
-                                    fill: #8a9798;
-                                }
-                            </style>
-                        </defs>
-                        <g id="download" transform="translate(0 -17.25)">
-                            <g class="path" transform="translate(0 17.25)">
-                                <path class="cls-1" d="M22.356,228.248a.657.657,0,0,0-.659.659v6a2.959,2.959,0,0,1-2.955,2.955H4.274a2.959,2.959,0,0,1-2.955-2.955v-6.1a.659.659,0,0,0-1.319,0v6.1a4.278,4.278,0,0,0,4.274,4.274H18.741a4.278,4.278,0,0,0,4.274-4.274v-6A.66.66,0,0,0,22.356,228.248Z" transform="translate(0 -217.849)"/>
-                                <path class="path" d="M140.615,33.344a.664.664,0,0,0,.464.2.643.643,0,0,0,.464-.2l4.191-4.191a.66.66,0,1,0-.933-.933l-3.062,3.067V17.909a.659.659,0,1,0-1.319,0V31.288l-3.067-3.067a.66.66,0,0,0-.933.933Z" transform="translate(-129.571 -17.25)"/>
-                            </g>
-                        </g>
-                    </svg>
-                </div>
-                <hr class="divider" />
-                <div class="clear"></div>
-                <h2>Initialize</h2>
-            </div>
-            <div class="step">
-                <div class="step-image ">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 23.015 21.33">
-                        <defs>
-                            <style>
-                                .path {
-                                    fill: #8a9798;
-                                }
-                            </style>
-                        </defs>
-                        <g id="asdf" transform="translate(0 -17.25)">
-                            <g class="path" transform="translate(0 17.25)">
-                                <path class="cls-1" d="M22.356,228.248a.657.657,0,0,0-.659.659v6a2.959,2.959,0,0,1-2.955,2.955H4.274a2.959,2.959,0,0,1-2.955-2.955v-6.1a.659.659,0,0,0-1.319,0v6.1a4.278,4.278,0,0,0,4.274,4.274H18.741a4.278,4.278,0,0,0,4.274-4.274v-6A.66.66,0,0,0,22.356,228.248Z" transform="translate(0 -217.849)"/>
-                                <path class="path" d="M140.615,33.344a.664.664,0,0,0,.464.2.643.643,0,0,0,.464-.2l4.191-4.191a.66.66,0,1,0-.933-.933l-3.062,3.067V17.909a.659.659,0,1,0-1.319,0V31.288l-3.067-3.067a.66.66,0,0,0-.933.933Z" transform="translate(-129.571 -17.25)"/>
-                            </g>
-                        </g>
-                    </svg>
-                </div>
-                <hr class="divider" />
-                <div class="clear"></div>
-                <h2>Download</h2>
-            </div>
-            <div class="step">
-                <div class="step-image">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 23.015 21.33">
-                        <defs>
-                            <style>
-                                .path {
-                                    fill: #8a9798;
-                                }
-                            </style>
-                        </defs>
-                        <g id="foo" transform="translate(0 -17.25)">
-                            <g class="path" transform="translate(0 17.25)">
-                                <path class="cls-1" d="M22.356,228.248a.657.657,0,0,0-.659.659v6a2.959,2.959,0,0,1-2.955,2.955H4.274a2.959,2.959,0,0,1-2.955-2.955v-6.1a.659.659,0,0,0-1.319,0v6.1a4.278,4.278,0,0,0,4.274,4.274H18.741a4.278,4.278,0,0,0,4.274-4.274v-6A.66.66,0,0,0,22.356,228.248Z" transform="translate(0 -217.849)"/>
-                                <path class="path" d="M140.615,33.344a.664.664,0,0,0,.464.2.643.643,0,0,0,.464-.2l4.191-4.191a.66.66,0,1,0-.933-.933l-3.062,3.067V17.909a.659.659,0,1,0-1.319,0V31.288l-3.067-3.067a.66.66,0,0,0-.933.933Z" transform="translate(-129.571 -17.25)"/>
-                            </g>
-                        </g>
-                    </svg>
-                </div>
-                <hr class="divider" />
-                <div class="clear"></div>
-                <h2>Back Up</h2>
-            </div>
-            <div class="step last-step">
-                <div class="step-image">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 23.015 21.33">
-                        <defs>
-                            <style>
-                                .path {
-                                    fill: #8a9798;
-                                }
-                            </style>
-                        </defs>
-                        <g id="bar" transform="translate(0 -17.25)">
-                            <g class="path" transform="translate(0 17.25)">
-                                <path class="cls-1" d="M22.356,228.248a.657.657,0,0,0-.659.659v6a2.959,2.959,0,0,1-2.955,2.955H4.274a2.959,2.959,0,0,1-2.955-2.955v-6.1a.659.659,0,0,0-1.319,0v6.1a4.278,4.278,0,0,0,4.274,4.274H18.741a4.278,4.278,0,0,0,4.274-4.274v-6A.66.66,0,0,0,22.356,228.248Z" transform="translate(0 -217.849)"/>
-                                <path class="path" d="M140.615,33.344a.664.664,0,0,0,.464.2.643.643,0,0,0,.464-.2l4.191-4.191a.66.66,0,1,0-.933-.933l-3.062,3.067V17.909a.659.659,0,1,0-1.319,0V31.288l-3.067-3.067a.66.66,0,0,0-.933.933Z" transform="translate(-129.571 -17.25)"/>
-                            </g>
-                        </g>
-                    </svg>
-                </div>
-                <div class="clear"></div>
-                <h2>Perform update</h2>
-            </div>
-            <div class="clear"></div>
-        </div>
-        <div id="display">
-            Initializing<br/>
-            Current version is: <br/>
-            Update to phpList  available.<br/>
-        </div>
-        <button class="right">Go to dashboard</button>
-    </div>
-    <span> Current step: <span id="current-step"> </span> <br>
-    <span id="error-message" </span><br>
-    <button id="next-step"> Next</button>
->>>>>>> 63a4e041e0bbe844a784d9a64731ddc7a1f39039
     </body>
 
     <script>
-
-        function takeAction(action, callback) {
+        let previousFormActions = null;
+        function takeAction(action, formValues, callback) {
             let req = new XMLHttpRequest();
             let url = "<?php echo htmlentities( $_SERVER['REQUEST_URI'] )?>";
             req.open('POST', url, true);
             req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
             req.onload  = callback;
-            req.send("action="+action);
 
+            let body = "action=" + action;
+
+            if (previousFormActions !== null) {
+                body = body + "&" + previousFormActions;
+            }
+            if(formValues) {
+                body = body + "&" + formValues;
+                previousFormActions = previousFormActions + "&" + formValues;
+            }
+
+            req.send(body);
         }
 
-        takeAction(0,function () {
-            setCurrentStep(JSON.parse(this.responseText).step);
+        takeAction(0, null, function () {
+            setCurrentStep(JSON.parse(this.responseText).status.step);
+            executeNextStep();
         });
 
         function setCurrentStep(action){
@@ -1171,23 +1094,60 @@ if(isset($_POST['action'])) {
             document.getElementById("error-message").innerText=error;
         }
         function showSuccessMessage(success){
-            document.getElementById("success-message").innerText=success;
+            document.getElementById("success-message").innerHTML=success;
         }
 
-        document.getElementById("next-step").addEventListener("click",function () {
+        function setCurrentActionItem(step) {
+            const stepActionMap = {
+                1: 0,
+                2: 0,
+                3: 0,
+                4: 1,
+                5: 1,
+                6: 1,
+                7: 2,
+                8: 3,
+                9: 3,
+                10: 3,
+                11: 3,
+                12: 3,
+                13: 3,
+                14: 3,
+            };
+
+            let steps = document.querySelectorAll('.step-image');
+            steps.forEach(function(element) {
+                element.classList.remove('active');
+            });
+            steps[stepActionMap[step]].classList.add('active');
+
+            return stepActionMap[step];
+        }
+
+        function executeNextStep(formParams) {
             let nextStep = parseInt(document.getElementById("current-step").innerText)+1;
+            setCurrentActionItem(nextStep);
             document.getElementById('next-step').disabled = true;
-            takeAction(nextStep, function () {
+            takeAction(nextStep, formParams, function () {
                 let continueResponse = JSON.parse(this.responseText).continue;
                 let responseMessage = JSON.parse(this.responseText).response;
+                let autocontinue = JSON.parse(this.responseText).autocontinue;
                 if (continueResponse===true) {
                     showSuccessMessage(responseMessage);
                     setCurrentStep(nextStep);
                     document.getElementById('next-step').disabled = false;
-                } else { showErrorMessage("Failed!");
-
+                    if (autocontinue===true){
+                        executeNextStep();
+                    }
+                } else {
+                    showErrorMessage(responseMessage);
                 }
             });
+        }
+
+        document.getElementById("next-step").addEventListener("click",function () {
+            let formParams = new URLSearchParams(new FormData(document.querySelector('form'))).toString();
+            executeNextStep(formParams);
         });
 
     </script>
