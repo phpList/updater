@@ -13,6 +13,7 @@ class updater
     private $availableUpdate = false;
 
     const DOWNLOAD_PATH = '../tmp_uploaded_update';
+    const ELIGIBLE_SESSION_KEY = 'phplist_updater_eligible';
 
     private $excludedFiles = array(
         'dl.php',
@@ -21,6 +22,19 @@ class updater
         'lt.php',
         'ut.php',
     );
+
+    public function isAuthenticated() {
+        session_start();
+        if(isset($_SESSION[self::ELIGIBLE_SESSION_KEY]) && $_SESSION[self::ELIGIBLE_SESSION_KEY] === true) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public function deauthUpdaterSession() {
+        unset($_SESSION[self::ELIGIBLE_SESSION_KEY]);
+    }
 
     /**
      * Return true if there is an update available
@@ -85,7 +99,8 @@ class updater
      */
     function getResponseFromServer()
     {
-        $serverUrl = "http://10.211.55.7/version.json";
+        $serverUrl = "https://download.phplist.org";
+        $updateUrl = $serverUrl.'?version='.$this->getCurrentVersion();
 
         // create a new cURL resource
         $ch = curl_init();
@@ -95,7 +110,7 @@ class updater
         // Will return the response, if false it print the response
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         // Set the url
-        curl_setopt($ch, CURLOPT_URL, $serverUrl);
+        curl_setopt($ch, CURLOPT_URL, $updateUrl);
         // Execute
         $responseFromServer = curl_exec($ch);
         // Closing
@@ -597,10 +612,48 @@ class updater
         return $decodedJson;
 
     }
+
+    /**
+     * Update updater to a new location before temp folder is deleted!
+     * @throws UpdateException
+     */
+    function moveUpdater(){
+        $rootDir = __DIR__ . '/../tmp_uploaded_update/phplist/public_html/lists';
+        $oldFile = $rootDir . '/updater';
+        $newFile = __DIR__ . '/../tempupdater';
+        $state = rename($oldFile, $newFile);
+        if ($state === false) {
+            throw new UpdateException("Could not move updater");
+        }
+    }
+
+    /**
+     * Replace new updater as the final step
+     * @throws UpdateException
+     */
+    function replaceNewUpdater(){
+
+        $rootDir = __DIR__ . '/../tmp_uploaded_update/phplist/public_html/lists';
+        $newUpdater = $rootDir . '/tempupdater';
+        $oldUpdater = __DIR__ . '/../updater';
+        $state = rename($newUpdater, $oldUpdater);
+        if ($state === false) {
+            throw new UpdateException("Could not move the new updater in place");
+        }
+        //Delete temp old updater files
+        $isTempDirDeleted = $this->rmdir_recursive('../tempupdater');
+        if($isTempDirDeleted===false){
+            throw new \UpdateException("Could not delete old updater files!");
+        }
+
+    }
 }
 
 try {
     $update = new updater();
+    if(!$update->isAuthenticated()) {
+        die('No permission to access updater.');
+    }
 
 
 
@@ -757,22 +810,36 @@ if(isset($_POST['action'])) {
             break;
         case 13:
             try {
-                $update->deleteTemporaryFiles();
-                echo(json_encode(array('continue' => true, 'response'=>'Deleted temporary files!','autocontinue'=>true)));
+                $update->moveUpdater();
+                echo(json_encode(array('continue' => true,'response'=>'Moved new entry points in place!','autocontinue'=>true)));
             } catch (\Exception $e) {
                 echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
             }
             break;
         case 14:
             try {
-                $update->removeMaintenanceMode();
-                echo(json_encode(array('continue' => true, 'response'=>'Removed maintenance mode')));
+                $update->deleteTemporaryFiles();
+                echo(json_encode(array('continue' => true, 'response'=>'Deleted temporary files!','autocontinue'=>true)));
             } catch (\Exception $e) {
                 echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
             }
             break;
         case 15:
-            echo(json_encode(array('continue' => true, 'response'=>'Updated successfully.')));
+            try {
+                $update->removeMaintenanceMode();
+                echo(json_encode(array('continue' => true, 'response'=>'Removed maintenance mode', 'autocontinue'=>true)));
+            } catch (\Exception $e) {
+                echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
+            }
+            break;
+        case 16:
+            try {
+                $update->replaceNewUpdater();
+                $update->deauthUpdaterSession();
+                echo(json_encode(array('continue' => true, 'response' => 'Updated successfully.')));
+            }catch (\Exception $e) {
+                echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
+            }
             break;
     };
 
@@ -1062,6 +1129,7 @@ if(isset($_POST['action'])) {
             <span id="error-message"></span><br>
         </div>
         <button id="next-step" class="right">Next</button>
+        <button id="database-upgrade" class="right" style="visibility:hidden;">Upgrade database</button>
     </div>
 
     </body>
@@ -1119,6 +1187,8 @@ if(isset($_POST['action'])) {
                 12: 3,
                 13: 3,
                 14: 3,
+                15: 3,
+                16: 3,
             };
 
             let steps = document.querySelectorAll('.step-image');
@@ -1131,18 +1201,18 @@ if(isset($_POST['action'])) {
         }
 
         function executeNextStep(formParams) {
-            let nextStep = parseInt(document.getElementById("current-step").innerText)+1;
+            let nextStep = parseInt(document.getElementById("current-step").innerText) + 1;
             setCurrentActionItem(nextStep);
             document.getElementById('next-step').disabled = true;
             takeAction(nextStep, formParams, function () {
                 let continueResponse = JSON.parse(this.responseText).continue;
                 let responseMessage = JSON.parse(this.responseText).response;
                 let autocontinue = JSON.parse(this.responseText).autocontinue;
-                if (continueResponse===true) {
+                if (continueResponse === true) {
                     showSuccessMessage(responseMessage);
                     setCurrentStep(nextStep);
                     document.getElementById('next-step').disabled = false;
-                    if (autocontinue===true){
+                    if (autocontinue === true) {
                         executeNextStep();
                     }
                 } else {
@@ -1155,7 +1225,6 @@ if(isset($_POST['action'])) {
             let formParams = new URLSearchParams(new FormData(document.querySelector('form'))).toString();
             executeNextStep(formParams);
         });
-
     </script>
 
     </html>
