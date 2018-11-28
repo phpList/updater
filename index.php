@@ -476,36 +476,39 @@ class updater
 
     /**
      * backUpFiles('/path/to/folder', '/path/to/backup.zip';
-     * @param $source /path to folder
      * @param $destination 'path' to backup zip
-     * @return bool
+     * @throws UpdateException
      */
-    function backUpFiles($destination)
-    {
-        $source = __DIR__ . '/../../';
-        if (extension_loaded('zip') === true) {
-            if (file_exists($source) === true) {
-                $zip = new ZipArchive();
-                if ($zip->open($destination, ZIPARCHIVE::CREATE) === true) {
-                    $source = realpath($source);
-                    if (is_dir($source) === true) {
-                        $files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($source), RecursiveIteratorIterator::SELF_FIRST);
-                        foreach ($files as $file) {
-                            $file = realpath($file);
-                            if (is_dir($file) === true) {
-                                $zip->addEmptyDir(str_replace($source . '/', '', $file . '/'));
-                            } else if (is_file($file) === true) {
-                                $zip->addFromString(str_replace($source . '/', '', $file), file_get_contents($file));
-                            }
-                        }
-                    } else if (is_file($source) === true) {
-                        $zip->addFromString(basename($source), file_get_contents($source));
-                    }
-                }
-                return $zip->close();
+    function backUpFiles($destination) {
+        $iterator = new \RecursiveDirectoryIterator(realpath(__DIR__ . '/../'), FilesystemIterator::SKIP_DOTS);
+        /** @var SplFileInfo[] $iterator */
+        /** @var  $iterator */
+        $iterator = new \RecursiveIteratorIterator($iterator, \RecursiveIteratorIterator::SELF_FIRST);
+
+        $zip = new ZipArchive();
+        $dest = __DIR__ . '/'. $destination;
+        $resZip= $zip->open($dest, ZipArchive::CREATE);
+        if($resZip===false){
+            throw new \UpdateException("Cannot read backup zip!");
+        }
+
+        foreach ($iterator as $file)  {
+            $prefix = realpath( __DIR__ . '/../');
+            $name = substr($file->getRealPath(), strlen($prefix) + 1);
+            if($file->isDir()) {
+                $zip->addEmptyDir($name);
+                continue;
+            }
+            if($file->isFile()) {
+                $zip->addFromString($name, file_get_contents($file->getRealPath()));
+                continue;
             }
         }
-        return false;
+        $state = $zip->close();
+        if($state === false) {
+            throw new UpdateException('Could not create back up zip');
+        }
+
     }
 
     function askForBackUpDestination(){
@@ -683,7 +686,7 @@ if(isset($_POST['action'])) {
         case 5:
             $createBackup = $_POST['create_backup'];
             if($createBackup === 'true') {
-                echo(json_encode(array('continue' => true, 'response' => 'Choose location where to backup <form><input type="text" name="backup_location" placeholder="/tmp/…" /></form>')));
+                echo(json_encode(array('continue' => true, 'response' => 'Choose location where to backup. Please make sure to choose a location outside the web root: <form onsubmit="return false;"><input type="text" id="backuplocation" name="backup_location" placeholder="/tmp/…" /></form>')));
             } else {
                 echo(json_encode(array('continue' => true, 'autocontinue'=>true)));
             }
@@ -767,6 +770,9 @@ if(isset($_POST['action'])) {
             } catch (\Exception $e) {
                 echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
             }
+            break;
+        case 15:
+            echo(json_encode(array('continue' => true, 'response'=>'Updated successfully.')));
             break;
     };
 
