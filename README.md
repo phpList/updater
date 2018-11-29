@@ -1,3 +1,3 @@
-# Auto Updater
-One click update for [phpList](https://github.com/phplist/phplist3)
+# Automatic updater for phpList installations
 
+Provides an easy, automated, web-based update mechanism for phpList installations.
