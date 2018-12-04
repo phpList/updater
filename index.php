@@ -1124,7 +1124,7 @@ if(isset($_POST['action'])) {
         <button id="database-upgrade" class="right" style="visibility:hidden;">Upgrade database</button>
     </div>
 
-    </body>
+
 
     <script>
         let previousFormActions = null;
@@ -1228,10 +1228,15 @@ if(isset($_POST['action'])) {
         }
 
         document.getElementById("next-step").addEventListener("click",function () {
-            let formParams = new URLSearchParams(new FormData(document.querySelector('form'))).toString();
-            executeNextStep(formParams);
+            let backupform = document.querySelector('form');
+            if (backupform !== null) {
+                let formParams = new URLSearchParams(new FormData(backupform)).toString();
+                executeNextStep(formParams);
+            }else {
+                executeNextStep(null);
+            }
         });
     </script>
-
+    </body>
     </html>
 <?php } ?>
