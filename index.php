@@ -494,7 +494,7 @@ class updater
 
 
     /**
-     * backUpFiles('/path/to/folder', '/path/to/backup.zip';
+     *  Back up old files to the location specified by the user.
      * @param $destination 'path' to backup zip
      * @throws UpdateException
      */
@@ -579,7 +579,7 @@ class updater
         if (!file_exists($actionsdir)) {
             $actionsFile = fopen($actionsdir, "w+");
             if ($actionsFile === false) {
-                throw new \UpdateException("Could not create actions file!");
+                throw new \UpdateException("Could not create actions file in the config directory, please change permissions");
             }
         }
         $written = file_put_contents($actionsdir, json_encode(array('continue'=>false, 'step'=>$action)));
@@ -827,7 +827,11 @@ if(isset($_POST['action'])) {
     };
 
     if($writeStep) {
-        $update->writeActions($action - 1);
+        try {
+            $update->writeActions($action - 1);
+        } catch(\Exception $e){
+
+        }
     }
 }else{
     ?>
@@ -1028,18 +1032,20 @@ if(isset($_POST['action'])) {
             <div id="first-step"> </div>
             <div class="step">
                 <div class="step-image active">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 23.015 21.33">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 27.482 25.403">
                         <defs>
                             <style>
-                                .path {
+                                .cls-1 {
                                     fill: #8a9798;
                                 }
                             </style>
                         </defs>
-                        <g id="download" transform="translate(0 -17.25)">
-                            <g class="path" transform="translate(0 17.25)">
-                                <path class="cls-1" d="M22.356,228.248a.657.657,0,0,0-.659.659v6a2.959,2.959,0,0,1-2.955,2.955H4.274a2.959,2.959,0,0,1-2.955-2.955v-6.1a.659.659,0,0,0-1.319,0v6.1a4.278,4.278,0,0,0,4.274,4.274H18.741a4.278,4.278,0,0,0,4.274-4.274v-6A.66.66,0,0,0,22.356,228.248Z" transform="translate(0 -217.849)"/>
-                                <path class="path" d="M140.615,33.344a.664.664,0,0,0,.464.2.643.643,0,0,0,.464-.2l4.191-4.191a.66.66,0,1,0-.933-.933l-3.062,3.067V17.909a.659.659,0,1,0-1.319,0V31.288l-3.067-3.067a.66.66,0,0,0-.933.933Z" transform="translate(-129.571 -17.25)"/>
+                        <g id="initialize" data-name="Integrity check" transform="translate(0 -7.524)">
+                            <g id="Group_211" data-name="Group 211" transform="translate(0 7.524)">
+                                <path id="Path_218" data-name="Path 218" class="cls-1" d="M23.808,16.226v-.994l3.674-.171V13.218l-3.674-.171v-.765H20.935V8.911A1.388,1.388,0,0,0,19.55,7.524H7.932A1.388,1.388,0,0,0,6.546,8.911v3.372H3.674v.765L0,13.218v1.844l3.674.171v.994H6.546v2.142H3.674v.763L0,19.3v1.843l3.674.172v.994H6.546v2.372H3.674v.765L0,25.619v1.843l3.674.171v.994H6.546v2.914a1.387,1.387,0,0,0,1.386,1.385H19.55a1.386,1.386,0,0,0,1.385-1.385V28.627h2.873v-.994l3.674-.171V25.619l-3.674-.171v-.765H20.935V22.311h2.873v-.994l3.674-.172V19.3l-3.674-.171v-.763H20.935V16.226Zm2.946,10.087v.452l-3.674.171v.96H21.05V25.412h2.03v.732ZM23.08,20.625v.959H21.05V19.1h2.03v.732L26.754,20v.454Zm3.674-6.71v.453l-3.674.171v.96H21.05V13.011h2.03v.732ZM19.55,32.2H7.932a.658.658,0,0,1-.657-.656V8.911a.658.658,0,0,1,.657-.658H19.55a.658.658,0,0,1,.656.658v22.63A.657.657,0,0,1,19.55,32.2ZM.728,26.766v-.452L4.4,26.143v-.732h2.03V27.9H4.4v-.96Zm0-6.313V20L4.4,19.828V19.1h2.03v2.486H4.4v-.959Zm0-6.086v-.453L4.4,13.743v-.732h2.03V15.5H4.4v-.96Z" transform="translate(0 -7.524)"/>
+                                <circle id="Ellipse_53" data-name="Ellipse 53" class="cls-1" cx="0.9" cy="0.9" r="0.9" transform="translate(8.193 1.813)"/>
+                                <circle id="Ellipse_54" data-name="Ellipse 54" class="cls-1" cx="0.9" cy="0.9" r="0.9" transform="translate(8.193 5.813)"/>
+                                <circle id="Ellipse_55" data-name="Ellipse 55" class="cls-1" cx="0.9" cy="0.9" r="0.9" transform="translate(17.193 21.813)"/>
                             </g>
                         </g>
                     </svg>
@@ -1050,21 +1056,23 @@ if(isset($_POST['action'])) {
             </div>
             <div class="step">
                 <div class="step-image ">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 23.015 21.33">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 27.337 27.637">
                         <defs>
                             <style>
-                                .path {
+                                .cls-1 {
                                     fill: #8a9798;
+                                    fill-rule: evenodd;
                                 }
                             </style>
                         </defs>
-                        <g id="asdf" transform="translate(0 -17.25)">
-                            <g class="path" transform="translate(0 17.25)">
-                                <path class="cls-1" d="M22.356,228.248a.657.657,0,0,0-.659.659v6a2.959,2.959,0,0,1-2.955,2.955H4.274a2.959,2.959,0,0,1-2.955-2.955v-6.1a.659.659,0,0,0-1.319,0v6.1a4.278,4.278,0,0,0,4.274,4.274H18.741a4.278,4.278,0,0,0,4.274-4.274v-6A.66.66,0,0,0,22.356,228.248Z" transform="translate(0 -217.849)"/>
-                                <path class="path" d="M140.615,33.344a.664.664,0,0,0,.464.2.643.643,0,0,0,.464-.2l4.191-4.191a.66.66,0,1,0-.933-.933l-3.062,3.067V17.909a.659.659,0,1,0-1.319,0V31.288l-3.067-3.067a.66.66,0,0,0-.933.933Z" transform="translate(-129.571 -17.25)"/>
-                            </g>
+                        <g id="back-up" data-name="Back up files" transform="translate(0 0.001)">
+                            <path id="Path_214" data-name="Path 214" class="cls-1" d="M48.3,15.4c.01-.012.019-.025.028-.038v0c.008-.013.016-.026.023-.039l.006-.012.015-.032.005-.012c.006-.015.011-.03.016-.045v0c0-.014.008-.029.011-.044l0-.013c0-.012,0-.024.005-.035s0-.009,0-.014,0-.032,0-.048V8.615c0-.016,0-.032,0-.048s0-.009,0-.014,0-.024-.005-.036l0-.013c0-.015-.007-.03-.011-.044v0c0-.015-.01-.03-.016-.045L48.37,8.4l-.015-.032-.006-.012c-.007-.013-.015-.026-.023-.039v0c-.009-.013-.018-.026-.028-.038l-.009-.011-.024-.027-.006-.006L40.181.157a.54.54,0,0,0-.763,0L29.946,9.629H26.669a.54.54,0,1,0,0,1.08h2.2l-2.983,2.983H22.821a.54.54,0,1,0,0,1.08H24.8l-.642.642a.54.54,0,0,0,0,.763l1.578,1.578H23.777a.54.54,0,1,0,0,1.08h3.042L29.8,21.817H26.669a.54.54,0,1,0,0,1.08h4.212l4.581,4.581a.54.54,0,0,0,.763,0L48.257,15.447l.005-.006.025-.027L48.3,15.4ZM45.413,11.84l1.922-1.922v3.845ZM35.844,26.333,32.408,22.9h1.643a.54.54,0,0,0,0-1.08H31.329l-2.983-2.983h1.371a.54.54,0,1,0,0-1.08H27.266L25.306,15.8l1.024-1.024h5.791a.54.54,0,1,0,0-1.08H27.41l2.983-2.983h6.459a.54.54,0,0,0,0-1.08h-5.38L39.8,1.3l7.312,7.312-2.844,2.844a.54.54,0,0,0,0,.763l2.844,2.844Zm0,0" transform="translate(-21.078)"/>
+                            <path id="Path_215" data-name="Path 215" class="cls-1" d="M133.485,104.217h2.646a.54.54,0,1,0,0-1.08h-2.646a.54.54,0,1,0,0,1.08Zm0,0" transform="translate(-125.769 -97.571)"/>
+                            <path id="Path_216" data-name="Path 216" class="cls-1" d="M54.122,179.482a.54.54,0,1,0-.54-.54A.541.541,0,0,0,54.122,179.482Zm0,0" transform="translate(-50.69 -168.773)"/>
+                            <path id="Path_217" data-name="Path 217" class="cls-1" d="M.54,328.934a.54.54,0,1,0,.54.54A.541.541,0,0,0,.54,328.934Zm0,0" transform="translate(0 -311.179)"/>
                         </g>
                     </svg>
+
                 </div>
                 <hr class="divider" />
                 <div class="clear"></div>
@@ -1102,13 +1110,14 @@ if(isset($_POST['action'])) {
                                 }
                             </style>
                         </defs>
-                        <g id="bar" transform="translate(0 -17.25)">
+                        <g id="foo" transform="translate(0 -17.25)">
                             <g class="path" transform="translate(0 17.25)">
                                 <path class="cls-1" d="M22.356,228.248a.657.657,0,0,0-.659.659v6a2.959,2.959,0,0,1-2.955,2.955H4.274a2.959,2.959,0,0,1-2.955-2.955v-6.1a.659.659,0,0,0-1.319,0v6.1a4.278,4.278,0,0,0,4.274,4.274H18.741a4.278,4.278,0,0,0,4.274-4.274v-6A.66.66,0,0,0,22.356,228.248Z" transform="translate(0 -217.849)"/>
                                 <path class="path" d="M140.615,33.344a.664.664,0,0,0,.464.2.643.643,0,0,0,.464-.2l4.191-4.191a.66.66,0,1,0-.933-.933l-3.062,3.067V17.909a.659.659,0,1,0-1.319,0V31.288l-3.067-3.067a.66.66,0,0,0-.933.933Z" transform="translate(-129.571 -17.25)"/>
                             </g>
                         </g>
                     </svg>
+
                 </div>
                 <div class="clear"></div>
                 <h2>Perform update</h2>
