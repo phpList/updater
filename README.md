@@ -6,7 +6,7 @@ Provides an easy, automated, web-based update mechanism for phpList installation
 
 The new phpList updater gives you an easy way to upgrade your installation via web. In just four steps you can update your installation to the latest release. 
 
-The updater will be available in all releases starting with RC 3.3.7 
+The updater will be available in all releases starting with phpList 3.3.7-RC1 
 
 ### Technical details
 
@@ -17,7 +17,7 @@ The updater is currently performing the following steps. If one of those steps f
 3. Check for write permissions
 4. Check whether all required phpList files are in place
 5. Ask the user if they want a backup of the software:
- - Yes:ask the user for the location
+ - Yes: ask the user for the location
  - If no: continue to the next step.
   
 6. Download new version to a temporary folder
@@ -30,15 +30,15 @@ The updater is currently performing the following steps. If one of those steps f
 13. Delete temporary files
 14. Remove maintenance mode
 15. Move new updater in place
-16. Deauthenticate updater session.
+16. Deauthenticate updater session
 17. Redirect to the phpList dashboard
 
 ### What the updater doesn't do (yet):
 
 The updater is at the moment solely focused on replacing the files of the core installation. It does neither:
 
-Upgrade the database (this will use the existing database migration code)
-Upgrade the plugins (this will use the existing plugin updater)
+- Upgrade the database (this uses the existing database migration code)
+- Upgrade the plugins (this uses the existing plugin updater)
 
 
 ### Future development plans
