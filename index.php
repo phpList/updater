@@ -954,6 +954,9 @@ if(isset($_POST['action'])) {
             #logo img {
                 margin-bottom: 20px;
             }
+            #logo h1 {
+                padding-top: 15px;
+            }
             #steps h2 {
                 font-size: 15px;
                 color: #8C8C8C;
@@ -992,7 +995,7 @@ if(isset($_POST['action'])) {
                 padding-left: 25%;
             }
             .active {
-                background-color: lightblue;
+                background-color: #56A3D2;
             }
             .active svg path {
                 fill: white;
@@ -1102,22 +1105,16 @@ if(isset($_POST['action'])) {
             </div>
             <div class="step last-step">
                 <div class="step-image">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 23.015 21.33">
-                        <defs>
-                            <style>
-                                .path {
-                                    fill: #8a9798;
-                                }
-                            </style>
-                        </defs>
-                        <g id="foo" transform="translate(0 -17.25)">
-                            <g class="path" transform="translate(0 17.25)">
-                                <path class="cls-1" d="M22.356,228.248a.657.657,0,0,0-.659.659v6a2.959,2.959,0,0,1-2.955,2.955H4.274a2.959,2.959,0,0,1-2.955-2.955v-6.1a.659.659,0,0,0-1.319,0v6.1a4.278,4.278,0,0,0,4.274,4.274H18.741a4.278,4.278,0,0,0,4.274-4.274v-6A.66.66,0,0,0,22.356,228.248Z" transform="translate(0 -217.849)"/>
-                                <path class="path" d="M140.615,33.344a.664.664,0,0,0,.464.2.643.643,0,0,0,.464-.2l4.191-4.191a.66.66,0,1,0-.933-.933l-3.062,3.067V17.909a.659.659,0,1,0-1.319,0V31.288l-3.067-3.067a.66.66,0,0,0-.933.933Z" transform="translate(-129.571 -17.25)"/>
-                            </g>
-                        </g>
-                    </svg>
-
+                    <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+                         viewBox="0 0 22.5 21.1" style="enable-background:new 0 0 22.5 21.1;" xml:space="preserve">
+                        <style type="text/css">
+                            .st0{
+                                fill:#8A9798;
+                            }
+                        </style>
+                        <path class="st0" d="M22,5.5c-0.3-0.3-0.7-0.3-1,0C18.5,8,9.8,16.6,7.5,18.8l-6-6c-0.3-0.3-0.7-0.3-1,0s-0.3,0.7,0,1l7,7L8,20.4
+	c0,0,11.1-11,13.9-13.8C22.3,6.3,22.3,5.8,22,5.5z"/>
+                </svg>
                 </div>
                 <div class="clear"></div>
                 <h2>Perform update</h2>
@@ -1244,6 +1241,7 @@ if(isset($_POST['action'])) {
             }else {
                 executeNextStep(null);
             }
+
         });
     </script>
     </body>
