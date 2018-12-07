@@ -79,7 +79,7 @@ class updater
         $versionString = isset($serverResponse['versionstring']) ? $serverResponse['versionstring'] : '';
         if ($version !== '' && $version !== $this->getCurrentVersion() && version_compare($this->getCurrentVersion(), $version)) {
             $this->availableUpdate = true;
-            $updateMessage = 'Update to the ' . htmlentities($versionString) . ' is available.  ';
+            $updateMessage = 'Update to ' . htmlentities($versionString) . ' is available.  ';
         } else {
             $updateMessage = 'phpList is up-to-date.';
         }
@@ -612,6 +612,13 @@ class updater
 
     }
 
+    function checkConfig(){
+        $configdir = __DIR__ . '/../config/';
+        if (!is_dir($configdir) || !is_writable($configdir)){
+            die("Cannot update because config directory is not writable.");
+        }
+    }
+
     /**
      * Update updater to a new location before temp folder is deleted!
      * @throws UpdateException
@@ -647,6 +654,8 @@ try {
     if(!$update->isAuthenticated()) {
         die('No permission to access updater.');
     }
+    $update->checkConfig();
+
 } catch (\UpdateException $e) {
     throw $e;
 }
