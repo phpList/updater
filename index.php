@@ -507,7 +507,7 @@ class updater
         $zip = new ZipArchive();
         $resZip= $zip->open($destination, ZipArchive::CREATE);
         if($resZip === false){
-            throw new \UpdateException("Cannot read backup zip!");
+            throw new \UpdateException("Error: Could not create back up the phpList directory. Please make sure that the argument is valid or writable and try again without reloading the page.");
         }
         $zip->addEmptyDir('lists');
 
@@ -525,7 +525,7 @@ class updater
         }
         $state = $zip->close();
         if($state === false) {
-            throw new UpdateException('Could not create back up zip');
+            throw new UpdateException('Error: Could not create back up the phpList directory. Please make sure that the argument is valid or is writable and try again without reloading the page.');
         }
 
     }
@@ -740,11 +740,11 @@ if(isset($_POST['action'])) {
                     $update->backUpFiles($_POST['backup_location']);
                     echo(json_encode(array('continue' => true, 'response' => 'Backup has been created')));
                 } catch (\Exception $e) {
-                    echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
-
+                    echo(json_encode(array('retry' => true, 'continue' => false, 'response' => $e->getMessage())));
+                    break;
                 }
             } else {
-                echo(json_encode(array('continue' => true,'response'=>'', 'autocontinue'=>true)));
+                echo(json_encode(array('continue' => true,'response'=>'No back up created', 'autocontinue'=>true)));
             }
 
             break;
