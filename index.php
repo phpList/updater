@@ -507,7 +507,7 @@ class updater
         $zip = new ZipArchive();
         $resZip= $zip->open($destination, ZipArchive::CREATE);
         if($resZip === false){
-            throw new \UpdateException("Error: Could not create back up the phpList directory. Please make sure that the argument is valid or writable and try again without reloading the page.");
+            throw new \UpdateException("Error: Could not create back up of phpList directory. Please make sure that the argument is valid or writable and try again without reloading the page.");
         }
         $zip->addEmptyDir('lists');
 
@@ -525,7 +525,7 @@ class updater
         }
         $state = $zip->close();
         if($state === false) {
-            throw new UpdateException('Error: Could not create back up the phpList directory. Please make sure that the argument is valid or is writable and try again without reloading the page.');
+            throw new UpdateException('Error: Could not create back up of phpList directory. Please make sure that the argument is valid or is writable and try again without reloading the page.');
         }
 
     }
@@ -722,7 +722,7 @@ if(isset($_POST['action'])) {
         case 6:
             $createBackup = $_POST['create_backup'];
             if($createBackup === 'true') {
-                echo(json_encode(array('continue' => true, 'response' => 'Choose location where to backup. Please make sure to choose a location outside the web root: <form onsubmit="return false;"><input type="text" id="backuplocation" name="backup_location" placeholder="/var/backup.zip" /></form>')));
+                echo(json_encode(array('continue' => true, 'response' => 'Choose location where to backup the /lists directory. Please make sure to choose a location outside the web root: <form onsubmit="return false;"><input type="text" id="backuplocation" name="backup_location" placeholder="/var/backup.zip" /></form>')));
             } else {
                 echo(json_encode(array('continue' => true, 'response' => '', 'autocontinue'=>true)));
             }
