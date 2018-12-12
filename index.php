@@ -274,11 +274,20 @@ class updater
     /**
      * Get a PDO connection
      * @return PDO
+     * @throws UpdateException
      */
     function getConnection()
     {
+        $standardConfig = __DIR__ . '/../config/config.php';
 
-        require __DIR__ . '/../config/config.php';
+        if (isset($_SERVER['ConfigFile']) && is_file($_SERVER['ConfigFile'])) {
+            include $_SERVER['ConfigFile'];
+
+        } elseif (file_exists($standardConfig)) {
+            include $standardConfig;
+        } else {
+            throw new \UpdateException("Cannot find config file");
+        }
 
         $charset = 'utf8mb4';
 
