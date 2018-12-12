@@ -722,7 +722,7 @@ if(isset($_POST['action'])) {
         case 6:
             $createBackup = $_POST['create_backup'];
             if($createBackup === 'true') {
-                echo(json_encode(array('continue' => true, 'response' => 'Choose location where to backup the /lists directory. Please make sure to choose a location outside the web root: <form onsubmit="return false;"><input type="text" id="backuplocation" name="backup_location" placeholder="/var/backup.zip" /></form>')));
+                echo(json_encode(array('continue' => true, 'response' => 'Choose location where to backup the /lists directory. Please make sure to choose a location outside the web root:<br> <form onsubmit="return false;"><input type="text" id="backuplocation" size="55" name="backup_location" placeholder="/var/backup.zip" /></form>')));
             } else {
                 echo(json_encode(array('continue' => true, 'response' => '', 'autocontinue'=>true)));
             }
@@ -734,6 +734,10 @@ if(isset($_POST['action'])) {
                 $phplistRootFolder = realpath(__DIR__ . '/../../');
                 if(strpos($backupLocation, $phplistRootFolder) === 0) {
                     echo(json_encode(array('retry' => true, 'continue' => false, 'response' => 'Please choose a folder outside of your phpList installation.')));
+                    break;
+                }
+                if (!preg_match("/^.*\.(zip)$/i", $_POST['backup_location'])) {
+                    echo(json_encode(array('retry' => true, 'continue' => false, 'response' => 'Please add .zip extension.')));
                     break;
                 }
                 try {
