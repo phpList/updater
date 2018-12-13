@@ -621,10 +621,36 @@ class updater
 
     }
 
+    /**
+     * Check if config folder is writable. Required to be writable in order to write steps.
+     */
     function checkConfig(){
         $configdir = __DIR__ . '/../config/';
         if (!is_dir($configdir) || !is_writable($configdir)){
             die("Cannot update because config directory is not writable.");
+        }
+    }
+
+    /**
+     * Check if required php modules are installed.
+     */
+    function checkphpmodules()
+    {
+
+        $phpmodules = array('curl', 'pdo', 'zip');
+        $notinstalled = array();
+
+        foreach ($phpmodules as $value){
+            if (!extension_loaded($value)) {
+                array_push($notinstalled, $value);
+            }
+        }
+        if (count($notinstalled)>0){
+            $message = "The following php modules are required. Please install them to continue.".'<br>';
+            foreach ($notinstalled as $value){
+                $message .= $value;
+            }
+            die($message);
         }
     }
 
@@ -664,6 +690,7 @@ try {
         die('No permission to access updater.');
     }
     $update->checkConfig();
+    $update->checkphpmodules();
 
 } catch (\UpdateException $e) {
     throw $e;
