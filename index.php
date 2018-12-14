@@ -648,7 +648,7 @@ class updater
         if (count($notinstalled)>0){
             $message = "The following php modules are required. Please install them to continue.".'<br>';
             foreach ($notinstalled as $value){
-                $message .= $value;
+                $message .= $value.'<br>';
             }
             die($message);
         }
