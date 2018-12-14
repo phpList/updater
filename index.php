@@ -1018,6 +1018,7 @@ if(isset($_POST['action'])) {
             }
             .active {
                 background-color: #56A3D2;
+                border: 0;
             }
             .active svg path {
                 fill: white;
