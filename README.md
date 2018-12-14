@@ -8,6 +8,10 @@ The new phpList updater gives you an easy way to upgrade your installation via w
 
 The updater will be available in all releases starting with phpList 3.3.7-RC1 
 
+### Requirements
+
+The automatic updater requires the following PHP extensions: curl, zip and pdo.
+
 ### Technical details
 
 The updater is currently performing the following steps. If one of those steps fail, you will have the possibility to correct the error and retry from the current step.
@@ -40,6 +44,12 @@ The updater is at the moment solely focused on replacing the files of the core i
 - Upgrade the database (this uses the existing database migration code)
 - Upgrade the plugins (this uses the existing plugin updater)
 
+### Notes
+
+- The updater stops when it finds unexpected files (not from phpList default installation) and lists them. To continue, you should delete these files.
+- Any plugins that are not included in releases are removed and need to reinstalled following update (settings for those plugins in the database are not affected; reinstalling the plugins should make them work as before).
+- It is possible to override the backup checks by reloading the page when the backup check fails. Do not reload the page unless you wish to proceed without a backup in this case.
+- When the update process fails you should manually remove actions.txt file inside the config folder in order to reset the process and be able to try again.
 
 ### Future development plans
 
