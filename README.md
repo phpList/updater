@@ -39,9 +39,9 @@ The updater is currently performing the following steps. If one of those steps f
 
 ### Permissions
 
-The whole phpList phpList directory and files must be writable by the HTTP user under which your web server is running. 
+The whole phpList directory and the files within it must be writable by the HTTP user under which your web server is running as. 
 If there is no match between the owner of your phpList files and the user under which your web server is running, you won’t be able to update. 
-The ownership can be changed using this command:
+The ownership can be changed in a Linux terminal using this command:
 
 <pre> chown -R user:group /path/to/phpList-directory </pre>
 
@@ -54,12 +54,12 @@ Change directory and file permissions:
 <pre> find . -type d -exec chmod 755 {} \; </pre>  
 <pre> find . -type f -exec chmod 644 {} \; </pre> 
 
-Permissions can be different from host to host. To find the HTTP user check the Apache Server configuration files.
+Permissions vary from host to host. To find the HTTP user check the Apache Server configuration files.
 You can view a file's ownership, permissions, and other important information with the ls command, using the -la option:
 
 <pre> ls -la file.php </pre>
 
-The default user and group for some Linux distributions are:
+The default Apache user and group for some Linux distributions are:
 
 - Debian/Ubuntu: www-data
 - Arch Linux: http
