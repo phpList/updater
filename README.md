@@ -37,6 +37,39 @@ The updater is currently performing the following steps. If one of those steps f
 16. Deauthenticate updater session
 17. Redirect to the phpList dashboard
 
+### Permissions
+
+The whole phpList phpList directory and files must be writable by the HTTP user under which your web server is running. 
+If there is no match between the owner of your phpList files and the user under which your web server is running, you won’t be able to update. 
+The ownership can be changed using this command:
+
+<pre> chown -R user:group /path/to/phpList-directory </pre>
+
+For instance: 
+
+<pre> chown -R www-data:www-data /var/www/lists </pre>
+
+Change directory and file permissions:
+
+<pre> find . -type d -exec chmod 755 {} \; </pre>  
+<pre> find . -type f -exec chmod 644 {} \; </pre> 
+
+Permissions can be different from host to host. To find the HTTP user check the Apache Server configuration files.
+You can view a file's ownership, permissions, and other important information with the ls command, using the -la option:
+
+<pre> ls -la file.php </pre>
+
+The default user and group for some Linux distributions are:
+
+- Debian/Ubuntu: www-data
+- Arch Linux: http
+- Fedora/CentOS: apache
+- openSUSE: user is wwwrun and the group is www.
+
+After you change the permissions, you can try again the update.
+After a successful update, please consider to re-apply any hardened directory permissions.
+
+
 ### What the updater doesn't do (yet):
 
 The updater is at the moment solely focused on replacing the files of the core installation. It does neither:
