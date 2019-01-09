@@ -64,7 +64,7 @@ The default Apache user and group for some Linux distributions are:
 - Debian/Ubuntu: www-data
 - Arch Linux: http
 - Fedora/CentOS: apache
-- openSUSE: user is wwwrun and the group is www.
+- openSUSE: user is wwwrun and the group is www
 
 After you change the permissions, you can try again the update.
 After a successful update, please consider to re-apply any hardened directory permissions.
