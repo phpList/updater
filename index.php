@@ -85,7 +85,7 @@ class updater
         }
         if ($this->availableUpdate && isset($serverResponse['autoupdater']) && !($serverResponse['autoupdater'] === 1 || $serverResponse['autoupdater'] === '1')) {
             $this->availableUpdate = false;
-            $updateMessage .= '<br />The one click updater is disabled for this update.';
+            $updateMessage .= '<br />The automatic updater is disabled for this update.';
         }
 
         return $updateMessage;
@@ -184,11 +184,9 @@ class updater
             } else {
                 $expectedFiles[$fileName] = 1;
             }
-
         }
 
         return $expectedFiles;
-
 
     }
 
@@ -463,6 +461,7 @@ class updater
     }
 
     /**
+     * Move new files in place.
      * @throws UpdateException
      */
     function moveNewFiles()
@@ -486,6 +485,9 @@ class updater
         }
     }
 
+    /**
+     * Move entry points in place.
+     */
     function moveEntryPHPpoints()
     {
         $rootDir = __DIR__ . '/../tmp_uploaded_update/phplist/public_html/lists';
@@ -560,6 +562,7 @@ class updater
     }
 
     /**
+     * Delete temporary downloaded files
      * @throws UpdateException
      */
     function deleteTemporaryFiles() {
@@ -731,7 +734,7 @@ if(isset($_POST['action'])) {
         case 3:
             $unexpectedFiles = $update->checkRequiredFiles();
             if(count($unexpectedFiles) !== 0) {
-                $elements = "The following files are not expected or are required: \n";;
+                $elements = "The following files are not expected or required. To continue please move or delete them. \n";;
                 foreach ($unexpectedFiles as $key=>$fileName){
                     $elements.=$key."\n";
                 }
