@@ -1028,9 +1028,10 @@ if(isset($_POST['action'])) {
             #steps h2 {
                 font-size: 15px;
                 color: #8C8C8C;
-                width: 50px;
+                width: 50%;
                 text-align: center;
-                padding-left: 10px;
+                margin-left: 6px;
+                display: flex;
             }
             #steps {
                 width: 80%;
