@@ -990,6 +990,21 @@ if(isset($_POST['action'])) {
                     width: 90%;
                 }
             }
+			
+			@media only screen and (min-width: 1200px) and (max-width: 1400px) {
+                 
+				 #center {
+				 margin: auto;
+                 max-width: 75%;
+				 }
+				 
+				 #display {
+                 max-width: 70%;
+                 margin: 0 auto;
+				 }
+			 
+            }
+			
             #display {
                 background-color: white;
                 padding-left: 20px;
