@@ -4,9 +4,9 @@ Provides an easy, automated, web-based update mechanism for phpList installation
 
 ### Usage
 
-The new phpList updater gives you an easy way to upgrade your installation via web. In just four steps you can update your installation to the latest release. 
+The new phpList updater gives you an easy way to upgrade your installation via web. In four steps you can update your installation to the latest release. 
 
-The updater will be available in all releases starting with phpList 3.3.7-RC1 
+The Updater is available in phpList 3.3.7+.
 
 ### Requirements
 
