@@ -1,8 +1,8 @@
 <?php
 /**
  * Automatic updater for phpList 3
- * @author Xheni Myrtaj <xheni@phplist.com>
  *
+ * @author Xheni Myrtaj <xheni@phplist.com>
  */
 
 class UpdateException extends \Exception {}
@@ -284,7 +284,7 @@ class updater
         } elseif (file_exists($standardConfig)) {
             include $standardConfig;
         } else {
-            throw new \UpdateException("Cannot find config file");
+            throw new \UpdateException("Error: Cannot find config file");
         }
 
         $charset = 'utf8mb4';
@@ -367,7 +367,7 @@ class updater
         $url = $this->getDownloadUrl();
         $zipFile = tempnam(sys_get_temp_dir(), 'phplist-update');
         if ($zipFile === false) {
-            throw new UpdateException("Temporary file cannot be created");
+            throw new UpdateException("Error: Temporary file cannot be created");
         }
         // Get The Zip File From Server
         $ch = curl_init();
@@ -400,7 +400,7 @@ class updater
 
         $tempdir = mkdir(self::DOWNLOAD_PATH, 0700);
         if ($tempdir === false) {
-            throw new UpdateException("Could not create temporary file");
+            throw new UpdateException("Error: Could not create temporary file");
         }
     }
 
@@ -429,7 +429,7 @@ class updater
             $current = "Update in progress \n";
             $content = file_put_contents(__DIR__.'/../'.$fileName, $current);
             if ($content === FALSE) {
-                throw new UpdateException("Could not write to the $fileName");
+                throw new UpdateException("Error: Could not write to the $fileName");
             }
         }
 
@@ -469,7 +469,7 @@ class updater
         $rootDir = __DIR__ . '/../tmp_uploaded_update/phplist/public_html/lists';
         $downloadedFiles = scandir($rootDir);
         if (count($downloadedFiles) <= 2) {
-            throw new UpdateException("Download folder is empty!");
+            throw new UpdateException("Error: Download folder is empty!");
         }
 
         foreach ($downloadedFiles as $fileName) {
@@ -480,7 +480,7 @@ class updater
             $newFile = __DIR__ . '/../' . $fileName;
             $state = rename($oldFile, $newFile);
             if ($state === false) {
-                throw new UpdateException("Could not move new files");
+                throw new UpdateException("Error: Could not move new files");
             }
         }
     }
@@ -553,7 +553,7 @@ class updater
 
         /* Open the Zip file */
         if ($zip->open($toBeExtracted) !== true) {
-            throw new \UpdateException("Unable to open the Zip File");
+            throw new \UpdateException("Error: Unable to open the Zip File");
         }
         /* Extract Zip File */
         $zip->extractTo($extractPath);
@@ -568,7 +568,7 @@ class updater
     function deleteTemporaryFiles() {
         $isTempDirDeleted = $this->rmdir_recursive(self::DOWNLOAD_PATH);
         if($isTempDirDeleted===false){
-            throw new \UpdateException("Could not delete temporary files!");
+            throw new \UpdateException("Error: Could not delete temporary files!");
         }
 
     }
@@ -591,12 +591,12 @@ class updater
         if (!file_exists($actionsdir)) {
             $actionsFile = fopen($actionsdir, "w+");
             if ($actionsFile === false) {
-                throw new \UpdateException("Could not create actions file in the config directory, please change permissions");
+                throw new \UpdateException("Error: Could not create actions file in the config directory, please change permissions");
             }
         }
         $written = file_put_contents($actionsdir, json_encode(array('continue'=>false, 'step'=>$action)));
         if($written === false){
-            throw new \UpdateException("Could not write on $actionsdir");
+            throw new \UpdateException("Error: Could not write on $actionsdir");
         }
     }
 
@@ -734,7 +734,7 @@ if(isset($_POST['action'])) {
         case 3:
             $unexpectedFiles = $update->checkRequiredFiles();
             if(count($unexpectedFiles) !== 0) {
-                $elements = "The following files are not expected or required. To continue please move or delete them. \n";;
+                $elements = "Error: The following files are not expected or required. To continue please move or delete them. \n";;
                 foreach ($unexpectedFiles as $key=>$fileName){
                     $elements.=$key."\n";
                 }
@@ -746,7 +746,7 @@ if(isset($_POST['action'])) {
         case 4:
             $notWriteableFiles = $update->checkWritePermissions();
             if(count($notWriteableFiles) !== 0) {
-                $notWriteableElements = "No write permission for the following files: \n";;
+                $notWriteableElements = "Error: No write permission for the following files: \n";;
                 foreach ($notWriteableFiles as $key=>$fileName){
                     $notWriteableElements.=$fileName."\n";
                 }
@@ -772,11 +772,11 @@ if(isset($_POST['action'])) {
                 $backupLocation = realpath(dirname($_POST['backup_location']));
                 $phplistRootFolder = realpath(__DIR__ . '/../../');
                 if(strpos($backupLocation, $phplistRootFolder) === 0) {
-                    echo(json_encode(array('retry' => true, 'continue' => false, 'response' => 'Please choose a folder outside of your phpList installation.')));
+                    echo(json_encode(array('retry' => true, 'continue' => false, 'response' => 'Error: Please choose a folder outside of your phpList installation.')));
                     break;
                 }
                 if (!preg_match("/^.*\.(zip)$/i", $_POST['backup_location'])) {
-                    echo(json_encode(array('retry' => true, 'continue' => false, 'response' => 'Please add .zip extension.')));
+                    echo(json_encode(array('retry' => true, 'continue' => false, 'response' => 'Error: Please add .zip extension.')));
                     break;
                 }
                 try {
@@ -990,21 +990,21 @@ if(isset($_POST['action'])) {
                     width: 90%;
                 }
             }
-			
-			@media only screen and (min-width: 1200px) and (max-width: 1400px) {
-                 
-				 #center {
-				 margin: auto;
-                 max-width: 75%;
-				 }
-				 
-				 #display {
-                 max-width: 70%;
-                 margin: 0 auto;
-				 }
-			 
+
+            @media only screen and (min-width: 1200px) and (max-width: 1400px) {
+
+                #center {
+                    margin: auto;
+                    max-width: 75%;
+                }
+
+                #display {
+                    max-width: 70%;
+                    margin: 0 auto;
+                }
+
             }
-			
+
             #display {
                 background-color: white;
                 padding-left: 20px;
