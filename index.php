@@ -173,6 +173,7 @@ class updater
             'lt.php' => 1,
             'ut.php' => 1,
             'updater'=>1,
+            'base'=>1,
         );
 
         $existingFiles = scandir(__DIR__ . '/../');
