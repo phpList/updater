@@ -5,7 +5,9 @@
  * @author Xheni Myrtaj <xheni@phplist.com>
  */
 
-class UpdateException extends \Exception {}
+class UpdateException extends \Exception
+{
+}
 
 class updater
 {
@@ -23,16 +25,18 @@ class updater
         'ut.php',
     );
 
-    public function isAuthenticated() {
+    public function isAuthenticated()
+    {
         session_start();
-        if(isset($_SESSION[self::ELIGIBLE_SESSION_KEY]) && $_SESSION[self::ELIGIBLE_SESSION_KEY] === true) {
+        if (isset($_SESSION[self::ELIGIBLE_SESSION_KEY]) && $_SESSION[self::ELIGIBLE_SESSION_KEY] === true) {
             return true;
         }
 
         return false;
     }
 
-    public function deauthUpdaterSession() {
+    public function deauthUpdaterSession()
+    {
         unset($_SESSION[self::ELIGIBLE_SESSION_KEY]);
         unlink(__DIR__ . '/../config/actions.txt');
     }
@@ -56,9 +60,9 @@ class updater
     {
         $version = file_get_contents('../admin/init.php');
         $matches = array();
-        preg_match_all('/define\(\"VERSION\",\"(.*)\"\);/', $version,$matches);
+        preg_match_all('/define\(\"VERSION\",\"(.*)\"\);/', $version, $matches);
 
-        if(isset($matches[1][0])) {
+        if (isset($matches[1][0])) {
             return $matches[1][0];
         }
 
@@ -100,7 +104,7 @@ class updater
     private function getResponseFromServer()
     {
         $serverUrl = "https://download.phplist.org/version.json";
-        $updateUrl = $serverUrl.'?version='.$this->getCurrentVersion();
+        $updateUrl = $serverUrl . '?version=' . $this->getCurrentVersion();
 
         // create a new cURL resource
         $ch = curl_init();
@@ -121,10 +125,11 @@ class updater
         return $responseFromServer;
     }
 
-    private function getDownloadUrl() {
+    private function getDownloadUrl()
+    {
         // todo: error handling
         $response = $this->getResponseFromServer();
-        if(isset($response['url'])) {
+        if (isset($response['url'])) {
             return $response['url'];
         }
         // todo error handling
@@ -172,8 +177,8 @@ class updater
             'index.php' => 1,
             'lt.php' => 1,
             'ut.php' => 1,
-            'updater'=>1,
-            'base'=>1,
+            'updater' => 1,
+            'base' => 1,
         );
 
         $existingFiles = scandir(__DIR__ . '/../');
@@ -428,7 +433,7 @@ class updater
 
         foreach ($entryPoints as $key => $fileName) {
             $current = "Update in progress \n";
-            $content = file_put_contents(__DIR__.'/../'.$fileName, $current);
+            $content = file_put_contents(__DIR__ . '/../' . $fileName, $current);
             if ($content === FALSE) {
                 throw new UpdateException("Error: Could not write to the $fileName");
             }
@@ -510,33 +515,34 @@ class updater
      * @param $destination 'path' to backup zip
      * @throws UpdateException
      */
-    function backUpFiles($destination) {
+    function backUpFiles($destination)
+    {
         $iterator = new \RecursiveDirectoryIterator(realpath(__DIR__ . '/../'), FilesystemIterator::SKIP_DOTS);
         /** @var SplFileInfo[] $iterator */
         /** @var  $iterator */
         $iterator = new \RecursiveIteratorIterator($iterator, \RecursiveIteratorIterator::SELF_FIRST);
 
         $zip = new ZipArchive();
-        $resZip= $zip->open($destination, ZipArchive::CREATE);
-        if($resZip === false){
+        $resZip = $zip->open($destination, ZipArchive::CREATE);
+        if ($resZip === false) {
             throw new \UpdateException("Error: Could not create back up of phpList directory. Please make sure that the argument is valid or writable and try again without reloading the page.");
         }
         $zip->addEmptyDir('lists');
 
-        foreach ($iterator as $file)  {
-            $prefix = realpath( __DIR__ . '/../');
-            $name = 'lists/'.substr($file->getRealPath(), strlen($prefix) + 1);
-            if($file->isDir()) {
+        foreach ($iterator as $file) {
+            $prefix = realpath(__DIR__ . '/../');
+            $name = 'lists/' . substr($file->getRealPath(), strlen($prefix) + 1);
+            if ($file->isDir()) {
                 $zip->addEmptyDir($name);
                 continue;
             }
-            if($file->isFile()) {
+            if ($file->isFile()) {
                 $zip->addFromString($name, file_get_contents($file->getRealPath()));
                 continue;
             }
         }
         $state = $zip->close();
-        if($state === false) {
+        if ($state === false) {
             throw new UpdateException('Error: Could not create back up of phpList directory. Please make sure that the argument is valid or is writable and try again without reloading the page.');
         }
 
@@ -566,9 +572,10 @@ class updater
      * Delete temporary downloaded files
      * @throws UpdateException
      */
-    function deleteTemporaryFiles() {
+    function deleteTemporaryFiles()
+    {
         $isTempDirDeleted = $this->rmdir_recursive(self::DOWNLOAD_PATH);
-        if($isTempDirDeleted===false){
+        if ($isTempDirDeleted === false) {
             throw new \UpdateException("Error: Could not delete temporary files!");
         }
 
@@ -595,8 +602,8 @@ class updater
                 throw new \UpdateException("Error: Could not create actions file in the config directory, please change permissions");
             }
         }
-        $written = file_put_contents($actionsdir, json_encode(array('continue'=>false, 'step'=>$action)));
-        if($written === false){
+        $written = file_put_contents($actionsdir, json_encode(array('continue' => false, 'step' => $action)));
+        if ($written === false) {
             throw new \UpdateException("Error: Could not write on $actionsdir");
         }
     }
@@ -606,20 +613,21 @@ class updater
      * @return mixed array of json data
      * @throws UpdateException
      */
-    function currentUpdateStep(){
+    function currentUpdateStep()
+    {
         $actionsdir = __DIR__ . '/../config/actions.txt';
         if (file_exists($actionsdir)) {
-            $status= file_get_contents($actionsdir);
-            if($status===false){
-                throw new \UpdateException( "Cannot read content from $actionsdir");
+            $status = file_get_contents($actionsdir);
+            if ($status === false) {
+                throw new \UpdateException("Cannot read content from $actionsdir");
             }
-            $decodedJson = json_decode($status,true);
+            $decodedJson = json_decode($status, true);
             if (!is_array($decodedJson)) {
                 throw new \UpdateException('JSON data cannot be decoded!');
             }
 
         } else {
-            return array('step'=>0,'continue'=>true);
+            return array('step' => 0, 'continue' => true);
         }
         return $decodedJson;
 
@@ -628,9 +636,10 @@ class updater
     /**
      * Check if config folder is writable. Required to be writable in order to write steps.
      */
-    function checkConfig(){
+    function checkConfig()
+    {
         $configdir = __DIR__ . '/../config/';
-        if (!is_dir($configdir) || !is_writable($configdir)){
+        if (!is_dir($configdir) || !is_writable($configdir)) {
             die("Cannot update because config directory is not writable.");
         }
     }
@@ -644,15 +653,15 @@ class updater
         $phpmodules = array('curl', 'pdo', 'zip');
         $notinstalled = array();
 
-        foreach ($phpmodules as $value){
+        foreach ($phpmodules as $value) {
             if (!extension_loaded($value)) {
                 array_push($notinstalled, $value);
             }
         }
-        if (count($notinstalled)>0){
-            $message = "The following php modules are required. Please install them to continue.".'<br>';
-            foreach ($notinstalled as $value){
-                $message .= $value.'<br>';
+        if (count($notinstalled) > 0) {
+            $message = "The following php modules are required. Please install them to continue." . '<br>';
+            foreach ($notinstalled as $value) {
+                $message .= $value . '<br>';
             }
             die($message);
         }
@@ -662,7 +671,8 @@ class updater
      * Update updater to a new location before temp folder is deleted!
      * @throws UpdateException
      */
-    function moveUpdater(){
+    function moveUpdater()
+    {
         $rootDir = __DIR__ . '/../tmp_uploaded_update/phplist/public_html/lists';
         $oldFile = $rootDir . '/updater';
         $newFile = __DIR__ . '/../tempupdater';
@@ -676,7 +686,8 @@ class updater
      * Replace new updater as the final step
      * @throws UpdateException
      */
-    function replaceNewUpdater() {
+    function replaceNewUpdater()
+    {
         $newUpdater = realpath(__DIR__ . '/../tempupdater');
         $oldUpdater = realpath(__DIR__ . '/../updater');
 
@@ -690,7 +701,7 @@ class updater
 
 try {
     $update = new updater();
-    if(!$update->isAuthenticated()) {
+    if (!$update->isAuthenticated()) {
         die('No permission to access updater.');
     }
     $update->checkConfig();
@@ -705,7 +716,7 @@ try {
  *
  *
  */
-if(isset($_POST['action'])) {
+if (isset($_POST['action'])) {
     set_time_limit(0);
 
     //ensure that $action is integer
@@ -716,14 +727,14 @@ if(isset($_POST['action'])) {
     $writeStep = true;
     switch ($action) {
         case 0:
-            $statusJson= $update->currentUpdateStep();
-            echo json_encode(array('status' => $statusJson,'autocontinue'=>true ));
+            $statusJson = $update->currentUpdateStep();
+            echo json_encode(array('status' => $statusJson, 'autocontinue' => true));
             break;
         case 1:
             $currentVersion = $update->getCurrentVersion();
-            $updateMessage= $update->checkIfThereIsAnUpdate();
+            $updateMessage = $update->checkIfThereIsAnUpdate();
             $isThereAnUpdate = $update->availableUpdate();
-            if($isThereAnUpdate === false){
+            if ($isThereAnUpdate === false) {
                 echo(json_encode(array('continue' => false, 'response' => $updateMessage)));
             } else {
                 echo(json_encode(array('continue' => true, 'response' => $updateMessage)));
@@ -734,26 +745,26 @@ if(isset($_POST['action'])) {
             break;
         case 3:
             $unexpectedFiles = $update->checkRequiredFiles();
-            if(count($unexpectedFiles) !== 0) {
+            if (count($unexpectedFiles) !== 0) {
                 $elements = "Error: The following files are not expected or required. To continue please move or delete them. \n";;
-                foreach ($unexpectedFiles as $key=>$fileName){
-                    $elements.=$key."\n";
+                foreach ($unexpectedFiles as $key => $fileName) {
+                    $elements .= $key . "\n";
                 }
                 echo(json_encode(array('retry' => true, 'continue' => false, 'response' => $elements)));
             } else {
-                echo(json_encode(array('continue' => true, 'response'=>'Integrity check successful', 'autocontinue'=>true)));
+                echo(json_encode(array('continue' => true, 'response' => 'Integrity check successful', 'autocontinue' => true)));
             }
             break;
         case 4:
             $notWriteableFiles = $update->checkWritePermissions();
-            if(count($notWriteableFiles) !== 0) {
+            if (count($notWriteableFiles) !== 0) {
                 $notWriteableElements = "Error: No write permission for the following files: \n";;
-                foreach ($notWriteableFiles as $key=>$fileName){
-                    $notWriteableElements.=$fileName."\n";
+                foreach ($notWriteableFiles as $key => $fileName) {
+                    $notWriteableElements .= $fileName . "\n";
                 }
                 echo(json_encode(array('retry' => true, 'continue' => false, 'response' => $notWriteableElements)));
             } else {
-                echo(json_encode(array('continue' => true,'response' => 'Write check successful.', 'autocontinue'=>true)));
+                echo(json_encode(array('continue' => true, 'response' => 'Write check successful.', 'autocontinue' => true)));
             }
             break;
         case 5:
@@ -761,18 +772,18 @@ if(isset($_POST['action'])) {
             break;
         case 6:
             $createBackup = $_POST['create_backup'];
-            if($createBackup === 'true') {
+            if ($createBackup === 'true') {
                 echo(json_encode(array('continue' => true, 'response' => 'Choose location where to backup the /lists directory. Please make sure to choose a location outside the web root:<br> <form onsubmit="return false;"><input type="text" id="backuplocation" size="55" name="backup_location" placeholder="/var/backup.zip" /></form>')));
             } else {
-                echo(json_encode(array('continue' => true, 'response' => '', 'autocontinue'=>true)));
+                echo(json_encode(array('continue' => true, 'response' => '', 'autocontinue' => true)));
             }
             break;
         case 7:
             $createBackup = $_POST['create_backup'];
-            if($createBackup === 'true') {
+            if ($createBackup === 'true') {
                 $backupLocation = realpath(dirname($_POST['backup_location']));
                 $phplistRootFolder = realpath(__DIR__ . '/../../');
-                if(strpos($backupLocation, $phplistRootFolder) === 0) {
+                if (strpos($backupLocation, $phplistRootFolder) === 0) {
                     echo(json_encode(array('retry' => true, 'continue' => false, 'response' => 'Error: Please choose a folder outside of your phpList installation.')));
                     break;
                 }
@@ -788,33 +799,33 @@ if(isset($_POST['action'])) {
                     break;
                 }
             } else {
-                echo(json_encode(array('continue' => true,'response'=>'No back up created', 'autocontinue'=>true)));
+                echo(json_encode(array('continue' => true, 'response' => 'No back up created', 'autocontinue' => true)));
             }
 
             break;
         case 8:
-            echo(json_encode(array('continue' => true, 'autocontinue' => true, 'response' =>'Download in progress')));
+            echo(json_encode(array('continue' => true, 'autocontinue' => true, 'response' => 'Download in progress')));
             break;
         case 9:
             try {
                 $update->downloadUpdate();
-                echo(json_encode(array('continue' => true, 'response' =>'The update has been downloaded!')));
+                echo(json_encode(array('continue' => true, 'response' => 'The update has been downloaded!')));
             } catch (\Exception $e) {
                 echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
             }
             break;
         case 10:
             $on = $update->addMaintenanceMode();
-            if($on===false){
+            if ($on === false) {
                 echo(json_encode(array('continue' => false, 'response' => 'Cannot set the maintenance mode on!')));
             } else {
-                echo(json_encode(array('continue' => true,'response'=> 'Set maintenance mode on', 'autocontinue'=>true)));
+                echo(json_encode(array('continue' => true, 'response' => 'Set maintenance mode on', 'autocontinue' => true)));
             }
             break;
         case 11:
             try {
                 $update->replacePHPEntryPoints();
-                echo(json_encode(array('continue' => true,'response'=>'Replaced entry points', 'autocontinue'=>true)));
+                echo(json_encode(array('continue' => true, 'response' => 'Replaced entry points', 'autocontinue' => true)));
             } catch (\Exception $e) {
                 echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
             }
@@ -822,7 +833,7 @@ if(isset($_POST['action'])) {
         case 12:
             try {
                 $update->deleteFiles();
-                echo(json_encode(array('continue' => true,'response'=>'Old files have been deleted!','autocontinue'=>true)));
+                echo(json_encode(array('continue' => true, 'response' => 'Old files have been deleted!', 'autocontinue' => true)));
             } catch (\Exception $e) {
                 echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
             }
@@ -830,7 +841,7 @@ if(isset($_POST['action'])) {
         case 13:
             try {
                 $update->moveNewFiles();
-                echo(json_encode(array('continue' => true, 'response' =>'Moved new files in place!','autocontinue'=>true)));
+                echo(json_encode(array('continue' => true, 'response' => 'Moved new files in place!', 'autocontinue' => true)));
             } catch (\Exception $e) {
                 echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
             }
@@ -838,7 +849,7 @@ if(isset($_POST['action'])) {
         case 14:
             try {
                 $update->moveEntryPHPpoints();
-                echo(json_encode(array('continue' => true,'response'=>'Moved new entry points in place!','autocontinue'=>true)));
+                echo(json_encode(array('continue' => true, 'response' => 'Moved new entry points in place!', 'autocontinue' => true)));
             } catch (\Exception $e) {
                 echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
             }
@@ -846,7 +857,7 @@ if(isset($_POST['action'])) {
         case 15:
             try {
                 $update->moveUpdater();
-                echo(json_encode(array('continue' => true,'response'=>'Moved new entry points in place!','autocontinue'=>true)));
+                echo(json_encode(array('continue' => true, 'response' => 'Moved new entry points in place!', 'autocontinue' => true)));
             } catch (\Exception $e) {
                 echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
             }
@@ -854,7 +865,7 @@ if(isset($_POST['action'])) {
         case 16:
             try {
                 $update->deleteTemporaryFiles();
-                echo(json_encode(array('continue' => true, 'response'=>'Deleted temporary files!','autocontinue'=>true)));
+                echo(json_encode(array('continue' => true, 'response' => 'Deleted temporary files!', 'autocontinue' => true)));
             } catch (\Exception $e) {
                 echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
             }
@@ -862,7 +873,7 @@ if(isset($_POST['action'])) {
         case 17:
             try {
                 $update->removeMaintenanceMode();
-                echo(json_encode(array('continue' => true, 'response'=>'Removed maintenance mode', 'autocontinue'=>true)));
+                echo(json_encode(array('continue' => true, 'response' => 'Removed maintenance mode', 'autocontinue' => true)));
             } catch (\Exception $e) {
                 echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
             }
@@ -873,26 +884,27 @@ if(isset($_POST['action'])) {
                 $update->replaceNewUpdater();
                 $update->deauthUpdaterSession();
                 echo(json_encode(array('continue' => true, 'nextUrl' => '../admin/', 'response' => 'Updated successfully.')));
-            }catch (\Exception $e) {
+            } catch (\Exception $e) {
                 echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
             }
             break;
     };
 
-    if($writeStep) {
+    if ($writeStep) {
         try {
             $update->writeActions($action - 1);
-        } catch(\Exception $e){
+        } catch (\Exception $e) {
 
         }
     }
-}else{
+} else {
     ?>
 
     <html>
     <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro" rel="stylesheet">
+
 
         <style>
             /* http://meyerweb.com/eric/tools/css/reset/
@@ -919,72 +931,87 @@ if(isset($_POST['action'])) {
                 font: inherit;
                 vertical-align: baseline;
             }
+
             /* HTML5 display-role reset for older browsers */
             article, aside, details, figcaption, figure,
             footer, header, hgroup, menu, nav, section {
                 display: block;
             }
+
             body {
                 line-height: 1;
             }
+
             ol, ul {
                 list-style: none;
             }
+
             blockquote, q {
                 quotes: none;
             }
+
             blockquote:before, blockquote:after,
             q:before, q:after {
                 content: '';
                 content: none;
             }
+
             table {
                 border-collapse: collapse;
                 border-spacing: 0;
             }
+
             /** phpList CSS **/
             body {
-                background-color: #eeeeee45;
+                background-color: #FAFAFA;
                 font-family: 'Source Sans Pro', sans-serif;
                 margin-top: 50px;
             }
+
             button {
-                background-color: #F29D71;
+                background-color: #21AE8A;
                 color: white;
-                border-radius: 55px;
-                height: 40px;
-                padding-left: 30px;
-                padding-right: 30px;
                 font-size: 15px;
                 text-transform: uppercase;
                 margin-top: 20px;
                 border: none;
+                width: 80px;
+                height: 27px;
+                box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.14);
             }
+
+
             button:disabled {
                 background-color: lightgrey !important;
             }
+
             .right {
                 float: right;
             }
+
             @media only screen and (min-width: 1200px) {
                 #center {
                     margin: auto;
                     width: 70%;
                 }
             }
+
             @media only screen and (max-width: 350px) {
                 #steps {
                     width: 100% !important;
                 }
             }
+
             @media only screen and (max-width: 800px) {
                 #center {
                     width: 100%;
                 }
+
                 .divider {
                     visibility: hidden;
                 }
             }
+
             @media only screen and (min-width: 800px) and (max-width: 1200px) {
                 #center {
                     margin: auto;
@@ -1005,27 +1032,57 @@ if(isset($_POST['action'])) {
                 }
 
             }
+            @media only screen and (min-width: 890px) and (max-width: 1100px) {
+
+                #container {
+                    width: 80%;
+                    margin: 0 auto;
+                }
+            }
+
+            @media only screen and (min-width: 1101px)  {
+
+                #container {
+                    width: 60%;
+                    margin: 0 auto;
+                }
+            }
+
+            @media only screen and (min-width: 700px) and (max-width: 889px) {
+
+                #container {
+                    width: 95%;
+                    margin: 0 auto;
+                }
+            }
+
 
             #display {
                 background-color: white;
                 padding-left: 20px;
                 padding-top: 20px;
                 padding-bottom: 20px;
-                border-radius: 20px;
+                border-radius: 12px;
+                width: 80%;
+                margin: 0 auto;
             }
+
             #logo {
                 color: #8C8C8C;
                 font-size: 20px;
                 text-align: center;
-                padding-bottom: 50px;
+                margin-bottom: 94px;
                 cursor: pointer;
             }
+
             #logo img {
                 margin-bottom: 20px;
             }
+
             #logo h1 {
-                padding-top: 15px;
+                margin-top: 34px;
             }
+
             #steps h2 {
                 font-size: 15px;
                 color: #8C8C8C;
@@ -1034,190 +1091,644 @@ if(isset($_POST['action'])) {
                 margin-left: 6px;
                 display: flex;
             }
+
             #steps {
                 width: 80%;
                 margin: auto;
-                padding-bottom: 30px;
+                padding-bottom: 54px;
             }
+
             #first-step {
-                width: calc((25% - 70px)/2) !important;
+                width: calc((25% - 70px) / 2) !important;
                 float: left;
                 height: 1px;
             }
+
             .step {
                 width: 25%;
                 float: left;
             }
+
             .last-step {
                 width: 70px;
             }
+
             .step-image {
                 width: 64px;
                 height: 64px;
                 border-radius: 100px;
-                border: 1px solid #8C8C8C;
-                margin-bottom: 20px;
+                margin-bottom: 12px;
                 float: left;
+                background-color: #fff;
+                box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.14);
             }
+
             .step-image svg {
                 width: 50%;
-                padding-top: 25%;
+                padding-top: 32%;
                 padding-left: 25%;
             }
+
             .active {
                 background-color: #56A3D2;
                 border: 0;
             }
+
             .active svg path {
                 fill: white;
             }
+
             .clear {
                 clear: both;
             }
+
             .divider {
-                border: 0.3px solid #8C8C8C;
+                border: 1px dashed #253746;
                 width: inherit;
                 margin-top: 30px;
             }
+
             .hidden {
                 display: none;
             }
+
+            i {
+                border: solid #ffffff;
+                border-width: 0 2px 2px 0;
+                display: inline-block;
+                padding: 3px;
+            }
+
+            /*.down {*/
+                /*transform: rotate(45deg);*/
+                /*-webkit-transform: rotate(45deg);*/
+            /*}*/
+
+            .option-heading:before {
+                content: "\25bc";
+            }
+
+            .option-heading.is-active:before {
+                content: "\25b2";
+            }
+
+            /*.option-heading.is-active {*/
+            /*margin-top:0px;*/
+            /*margin-bottom: 0px;*/
+            /*padding-top:0px;*/
+            /*padding-bottom:0px;*/
+            /*}*/
+
+            /* Helpers */
+            .is-hidden {
+                display: block;
+                background-color: rgb(255, 255, 255);
+
+            }
+
+            #footer_updater {
+                position: absolute;
+                bottom: 0px;
+                /*width: 644px;*/
+                height: 20px;
+                /*margin: 0 500px;*/
+            }
+
+            .option-heading {
+                color: #fff;
+                background: #4B8CCA;
+                /* padding: 3px 17px; */
+                border-radius: 5px;
+                width: 50px;
+                height: 19px;
+                padding-top: 7px;
+                display: block;
+            }
+
+            .properties {
+                text-align: center;
+                /*max-width: 720px; !* (200+(20x2))x3 *!*/
+                font-size: 0; /* fix for white space bug */
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            .property {
+                display: inline-block;
+                margin: 20px;
+                font-size: 16px;
+            }
+
+            ul li {
+                color: #8A9798;
+                font-size: 14px;
+                font-family: "Source Sans Pro", Light;
+                margin-bottom: 8px;
+                display: flex;
+            }
+
+            /*li::before {*/
+            /*content: "•"; !* Insert content that looks like bullets *!*/
+            /*padding-right: 8px;*/
+            /*color: #4B8CCA; !* Or a color you prefer *!*/
+            /*}*/
+
+            /*h1,h2,h3,h4,h5,h6{font-weight:400}*/
+            /*h1{font-size:25px}*/
+            /*h2{font-size:23px}*/
+            /*h3{font-size:21px;margin-bottom:10px;margin-top:10px}*/
+            /*h4{font-size:19px}*/
+            /*h5{font-size:17px}*/
+            /*h6{font-size:15px}*/
+            /*ol{list-style:decimal;padding:5px 20px}*/
+            /*ul{list-style:none;margin-bottom:10px;padding:5px 20px}*/
+            /*ul.nobullets{list-style:none}*/
+            /*li{margin:0 0 15px 15px}*/
+            /*h3 a{font-size:18px;word-wrap:break-word}*/
+            li.final {
+                color: #4B8CCA;
+                font-family: Montserrat, Regular;
+                font-size: 24px;
+                letter-spacing: 2px;
+                line-height: 42px;
+            }
+
+            li.migrate {
+                color: #253746;
+                font-family: Montserrat, Regular;
+                font-size: 18px;
+                margin-bottom: 20px;
+            }
+
+            #success-message {
+                font-size: 14px;
+                font-family: Source Sans Pro, Light;
+                line-height: 22px;
+                color: #2C2C2C;
+            }
+
+            #next-step {
+                margin-top: 40px;
+            }
+
+            .outer {
+                position: absolute;
+                bottom: 0px;
+                width: 100%;
+                /*width: 300px; */
+                margin: 0px auto;
+                text-align: center;
+            }
+
+            .inner {
+                display: none;
+                background-color: #fff;
+                /*padding: 10%;*/
+                height: 230px;
+                box-shadow: 9px 5px 6px 4px rgba(0, 0, 0, 0.16);
+            }
+
+            /*.inner p {*/
+            /*display: none;*/
+            /*}*/
+            button.info-footer {
+                background-color: #4B8CCA;
+                color: white;
+                margin-top: 0px;
+                border: none;
+                width: 50px;
+                height: 25px;
+                border-radius: 5px 5px 0px 0px;
+                box-shadow: none;
+            }
+
+            /*.rotate {*/
+                /*-moz-transition: all .5s linear;*/
+                /*-webkit-transition: all .5s linear;*/
+                /*transition: all .5s linear;*/
+            /*}*/
+
+            /*.rotate.down {*/
+                /*-moz-transform: rotate(45deg);*/
+                /*-webkit-transform: rotate(45deg);*/
+                /*transform: rotate(45deg);*/
+            /*}*/
+
+            #left {
+                float: left;
+                width: 70%;
+                margin-top: 34px;
+            }
+
+            #right {
+                overflow: hidden
+            }
+
+
+
+            #sqr {
+                width: 200px;
+                height: 155px;
+                border: 2px dashed #4B8CCA;
+                margin-top: 35px;
+                background: #F5F8FC;
+            }
+
+            #triangle_down {
+                width: 0;
+                height: 0;
+                border-top: 140px solid #20a3bf;
+                border-left: 70px solid transparent;
+                border-right: 70px solid transparent;
+            }
+
+            .book {
+                text-decoration: none;
+                border: 1px dashed #21AE8A;
+                padding: 8px 26px;
+                color: #21AE8A;
+                font-weight: 600;
+                font-size: 12px;
+                background: #fff;
+            }
+            #database-upgrade.right {
+                margin-top: 40px;
+                font-size: 12px;
+                padding: 1px 10px;
+            }
+
+            .rotate{
+                -moz-transition: all 1s linear;
+                -webkit-transition: all 1s linear;
+                transition: all 1s linear;
+            }
+
+            .rotate.down{
+                -moz-transform:rotate(180deg);
+                -webkit-transform:rotate(180deg);
+                transform:rotate(180deg);
+            }
+
+            .arrow-up {
+                width: 0;
+                height: 0;
+                border-left: 5px solid transparent;
+                border-right: 5px solid transparent;
+
+                border-bottom: 5px solid black;
+            }
+
+            .arrow-down {
+                width: 0;
+                height: 0;
+                border-left: 8px solid transparent;
+                border-right: 8px solid transparent;
+                border-top: 8px solid #fff;
+                margin: 0 auto;
+            }
+
         </style>
     </head>
     <body>
 
     <div id="center">
         <div id="logo" title="Go back to phpList dashboard" onclick="location.href='../admin';">
-            <svg width="47.055mm" height="14.361mm" version="1.1" viewBox="0 0 166.73201 50.884" xmlns="http://www.w3.org/2000/svg" >
-                <g transform="translate(-199.83 -209.59)" fill="#8C8C8C">
-                    <path transform="matrix(.9375 0 0 .9375 199.83 209.59)" d="m27.139 0a27.138 27.138 0 0 0 -22.072 11.385l17.771 17.951 6.543-6.5176-3.7148-3.7109-0.064454-0.083984c-0.83947-1.1541-1.2461-2.4403-1.2461-3.9336 0-3.7963 3.0896-6.8848 6.8848-6.8848s6.8828 3.0885 6.8828 6.8848c0 1.6395-0.55599 3.1158-1.6504 4.3926l-0.070312 0.076172-3.2715 3.2617 17.648 17.611a27.138 27.138 0 0 0 3.4961 -13.293 27.138 27.138 0 0 0 -27.137 -27.139zm4.1035 10.855c-2.3371 0-4.2383 1.9003-4.2383 4.2363 0.001067 0.89067 0.21941 1.6238 0.68555 2.2969l3.5684 3.5625 3.2383-3.2285c0.66027-0.784 0.98047-1.6442 0.98047-2.6309 0-2.336-1.8973-4.2363-4.2344-4.2363zm-27.658 2.8438a27.138 27.138 0 0 0 -3.584 13.439 27.138 27.138 0 0 0 27.139 27.137 27.138 27.138 0 0 0 22.23 -11.594l-18.113-17.992-6.5527 6.5273 3.5117 3.5547c0.94187 1.232 1.4395 2.6647 1.4395 4.1484-0.001067 3.7952-3.0896 6.8848-6.8848 6.8848-3.7963 0-6.8848-3.0885-6.8848-6.8848 0-1.2864 0.34507-2.5299 1-3.5977l0.082031-0.13477 3.998-3.9824-17.381-17.506zm19.248 19.385l-3.7637 3.748c-0.35093 0.62293-0.53516 1.3402-0.53516 2.0879 0 2.3339 1.9003 4.2363 4.2363 4.2363s4.2402-1.9003 4.2402-4.2363c0-0.88533-0.28766-1.7151-0.84766-2.4746l-3.3301-3.3613z" stroke-width="1.0667"/>
-                    <path d="m263.24 229.86c1.53-1.693 2.958-2.438 4.997-2.438 5.236 0 7.921 4.556 7.921 9.043s-2.754 9.315-7.921 9.281c-2.144 0-3.671-0.714-4.997-2.176v7.955h-3.06v-23.627h3.06zm4.997 13.132c2.992 0 4.726-3.06 4.726-6.459 0-3.332-1.698-6.323-4.726-6.323-6.969 0-6.969 12.782 0 12.782z"/>
-                    <path d="m282.11 229.86c1.122-2.057 2.89-2.71 4.896-2.71 4.861 0 6.527 3.468 6.527 7.445v10.403h-3.06v-10.403c0-2.55-0.852-4.691-3.47-4.691-2.992 0-4.896 1.802-4.896 4.691v10.403h-3.062v-24.546h3.062z"/>
-                    <path d="m300.24 229.86c1.527-1.693 2.957-2.438 4.997-2.438 5.233 0 7.922 4.556 7.922 9.043s-2.754 9.315-7.922 9.281c-2.144 0-3.672-0.714-4.997-2.176v7.955h-3.062v-23.627h3.062zm4.997 13.132c2.99 0 4.726-3.06 4.726-6.459 0-3.332-1.7-6.323-4.726-6.323-6.969 0-6.969 12.782 0 12.782z"/>
-                    <path d="m316.81 245v-24.546h3.229v21.622h12.341v2.924z"/>
-                    <path d="m334.68 223.88v-3.434h3.4v3.434zm0.17 21.112v-17.372h3.061v17.372z"/>
-                    <path d="m340.85 239.01h3.195c0.17 2.584 1.77 3.773 3.738 3.773 2.006 0 3.943-0.918 3.943-2.754 0-0.884-0.512-1.428-1.395-1.835-0.477-0.204-1.02-0.374-1.633-0.545-3.16-0.781-7.785-1.121-7.785-5.371 0-3.808 3.469-4.861 6.562-4.861 3.363 0 6.936 1.462 6.936 6.392h-3.229c0-2.958-1.904-3.672-3.705-3.672-1.734 0-3.332 0.646-3.332 2.142 0 0.714 0.439 1.156 1.395 1.53 0.477 0.204 1.055 0.374 1.664 0.51 0.613 0.136 1.293 0.306 1.975 0.441 2.686 0.646 5.812 1.666 5.812 5.27 0 3.944-3.807 5.474-7.139 5.474-3.5-1e-3 -6.934-2.074-7.002-6.494z"/>
-                    <path d="m359.39 240.17v-9.689h-3.398v-2.55h3.398v-4.521h3.062v4.521h4.113v2.55h-4.113v9.689c0 1.224-0.035 2.753 1.562 2.753 0.309 0 0.613-0.067 0.953-0.102 0.34-0.068 0.682-0.136 1.6-0.238v2.516c-1.09 0.272-1.805 0.408-2.584 0.408-4.253 0-4.593-2.21-4.593-5.337z"/>
+            <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="175"
+                 height="54.598" viewBox="0 0 175 54.598">
+                <defs>
+                    <linearGradient id="linear-gradient" x1="0.763" y1="0.237" x2="0.257" y2="0.745"
+                                    gradientUnits="objectBoundingBox">
+                        <stop offset="0" stop-color="#fff"/>
+                        <stop offset="0.15" stop-color="#fbfcfc"/>
+                        <stop offset="0.28" stop-color="#f0f2f3"/>
+                        <stop offset="0.42" stop-color="#dee1e3"/>
+                        <stop offset="0.55" stop-color="#c3c9cd"/>
+                        <stop offset="0.67" stop-color="#a1aab0"/>
+                        <stop offset="0.8" stop-color="#78848d"/>
+                        <stop offset="0.92" stop-color="#485865"/>
+                        <stop offset="1" stop-color="#233746"/>
+                    </linearGradient>
+                    <linearGradient id="linear-gradient-2" x1="0.236" y1="0.778" x2="0.717" y2="0.294"
+                                    gradientUnits="objectBoundingBox">
+                        <stop offset="0" stop-color="#fff"/>
+                        <stop offset="0.15" stop-color="#fbfcfc"/>
+                        <stop offset="0.29" stop-color="#f0f2f3"/>
+                        <stop offset="0.42" stop-color="#dee0e3"/>
+                        <stop offset="0.55" stop-color="#c3c8cd"/>
+                        <stop offset="0.67" stop-color="#a1aab0"/>
+                        <stop offset="0.8" stop-color="#78848d"/>
+                        <stop offset="0.92" stop-color="#485864"/>
+                        <stop offset="1" stop-color="#243746"/>
+                    </linearGradient>
+                </defs>
+                <g id="Artwork_3" data-name="Artwork 3" transform="translate(87.5 27.299)">
+                    <g id="Artwork_3-2" data-name="Artwork 3" transform="translate(-87.5 -27.299)">
+                        <g id="Group_343" data-name="Group 343" transform="translate(62.756 10.828)">
+                            <g id="Group_342" data-name="Group 342" transform="translate(106.498)">
+                                <path id="Path_799" data-name="Path 799"
+                                      d="M541.063,41.334v-.413a1.175,1.175,0,0,0-.064-.444.571.571,0,0,0-.286-.286h0a.6.6,0,0,0,.349-.54.762.762,0,0,0-.286-.635,1.333,1.333,0,0,0-.825-.222H539v2.825h.444V40.381h.6a.6.6,0,0,1,.413.127.54.54,0,0,1,.127.413,4.921,4.921,0,0,0,.032.54v.1h.476v-.19Zm-.444-1.778a.381.381,0,0,1-.19.317.921.921,0,0,1-.476.127h-.508V39.08h.54a.825.825,0,0,1,.476.127A.445.445,0,0,1,540.619,39.556Z"
+                                      transform="translate(-537.159 -37.306)" fill="#243746"/>
+                                <path id="Path_800" data-name="Path 800"
+                                      d="M538.564,35.5a2.73,2.73,0,0,0-1.048-1.016,2.952,2.952,0,0,0-2.889,0,2.73,2.73,0,0,0-1.048,1.016,2.825,2.825,0,0,0,1.048,3.873,2.952,2.952,0,0,0,2.889,0,2.825,2.825,0,0,0,1.048-3.873Zm-2.476,3.873a2.444,2.444,0,0,1-1.27-.349,2.381,2.381,0,0,1-.889-.889,2.445,2.445,0,0,1-.317-1.206,2.413,2.413,0,0,1,.317-1.238,2.349,2.349,0,0,1,.889-.889,2.476,2.476,0,0,1,1.238-.317,2.444,2.444,0,0,1,1.27.349,2.381,2.381,0,0,1,.889.889,2.476,2.476,0,0,1,0,2.412,2.381,2.381,0,0,1-.889.889,2.444,2.444,0,0,1-1.238.349Z"
+                                      transform="translate(-533.2 -34.111)" fill="#243746"/>
+                            </g>
+                            <path id="Path_801" data-name="Path 801"
+                                  d="M274.011,50.491a7.072,7.072,0,0,1,1.809,5.269v9.079h-4.6v-8.38a4.208,4.208,0,0,0-.825-2.825,2.9,2.9,0,0,0-2.381-.921,3.65,3.65,0,0,0-2.762,1.079A4.432,4.432,0,0,0,264.2,57v7.841h-4.6V47.6a4.6,4.6,0,0,1,4.6-4.6h0v7.618a6.126,6.126,0,0,1,2.222-1.4,8,8,0,0,1,2.825-.508A6.5,6.5,0,0,1,274.011,50.491Z"
+                                  transform="translate(-239.951 -40.178)" fill="#243746"/>
+                            <path id="Path_802" data-name="Path 802"
+                                  d="M384.493,47.3V63.87h10.348v3.9H379.7V52.093A4.793,4.793,0,0,1,384.493,47.3Z"
+                                  transform="translate(-321.927 -43.113)" fill="#243746"/>
+                            <path id="Path_803" data-name="Path 803"
+                                  d="M433.614,47.821a2.886,2.886,0,0,1,4.127-4.031,2.6,2.6,0,0,1,.794,1.936,2.889,2.889,0,0,1-.794,2.1,3.016,3.016,0,0,1-4.127.032Z"
+                                  transform="translate(-358.161 -40.175)" fill="#243746"/>
+                            <rect id="Rectangle_185" data-name="Rectangle 185" width="4.603" height="13.888"
+                                  transform="translate(75.231 10.757)" fill="#243746"/>
+                            <path id="Path_804" data-name="Path 804"
+                                  d="M334.184,64.171a7.3,7.3,0,0,0-2.857-2.857A8.1,8.1,0,0,0,327.3,60.3a6.11,6.11,0,0,0-4.984,2.063V60.3a4.6,4.6,0,0,0-4.412,4.635v17.2h4.6V74.71a6.179,6.179,0,0,0,4.793,1.9,8.1,8.1,0,0,0,4.031-1.016,7.3,7.3,0,0,0,2.857-2.857,9.289,9.289,0,0,0,0-8.571Zm-4.7,7.11a3.873,3.873,0,0,1-2.92,1.174,3.987,3.987,0,1,1,2.92-6.857,3.682,3.682,0,0,1,.794,1.143,5.4,5.4,0,0,1,.254,1.746,5.9,5.9,0,0,1-.127,1.143,3.9,3.9,0,0,1-.921,1.651Z"
+                                  transform="translate(-279.745 -51.985)" fill="#243746"/>
+                            <path id="Path_805" data-name="Path 805"
+                                  d="M469.477,68.863a4.761,4.761,0,0,0-2.159-1.333,27.173,27.173,0,0,0-3.174-.7,14.188,14.188,0,0,1-2.539-.571,1.048,1.048,0,0,1-.794-1.048,1.206,1.206,0,0,1,.73-1.048,4.655,4.655,0,0,1,2.222-.413,9.205,9.205,0,0,1,4.571,1.206l1.524-3.27a9.364,9.364,0,0,0-2.762-1.016,15.459,15.459,0,0,0-3.365-.381,10.856,10.856,0,0,0-3.936.635,5.619,5.619,0,0,0-2.539,1.809A4.349,4.349,0,0,0,456.4,65.4a3.818,3.818,0,0,0,.921,2.762,4.984,4.984,0,0,0,2.19,1.365,23.2,23.2,0,0,0,3.206.667,11.776,11.776,0,0,1,2.444.508,1.017,1.017,0,0,1,.794.984q0,1.46-2.92,1.46a10.793,10.793,0,0,1-2.952-.413,10.127,10.127,0,0,1-2.159-.889l-1.524,3.3a11.174,11.174,0,0,0,2.6.984,15.4,15.4,0,0,0,3.873.476,11.491,11.491,0,0,0,4.031-.635,5.65,5.65,0,0,0,2.571-1.778,4.19,4.19,0,0,0,.889-2.635A3.687,3.687,0,0,0,469.477,68.863Z"
+                                  transform="translate(-374.279 -51.98)" fill="#243746"/>
+                            <path id="Path_806" data-name="Path 806"
+                                  d="M215.032,68.457a8.634,8.634,0,0,0-1.048-4.285,7.3,7.3,0,0,0-2.857-2.857A8.1,8.1,0,0,0,207.1,60.3a6.109,6.109,0,0,0-4.984,2.063V60.3a4.6,4.6,0,0,0-4.412,4.635v17.2h4.6V74.71a6.179,6.179,0,0,0,4.793,1.9,8.094,8.094,0,0,0,4.031-1.016,7.3,7.3,0,0,0,2.857-2.857,8.634,8.634,0,0,0,1.048-4.285Zm-12.761,0h0a3.873,3.873,0,0,1,4.031-3.968,4,4,0,0,1,2.92,1.111,3.619,3.619,0,0,1,1.079,2.1,6.188,6.188,0,0,1,.063.7,4.1,4.1,0,0,1-1.111,2.92A4.022,4.022,0,0,1,202.3,68.52Z"
+                                  transform="translate(-197.7 -51.985)" fill="#243746"/>
+                            <path id="Path_807" data-name="Path 807"
+                                  d="M514.988,66.8a2.952,2.952,0,0,1-1.873.6,1.9,1.9,0,0,1-1.46-.54,2.159,2.159,0,0,1-.508-1.555V59.623h3.714a3.555,3.555,0,0,0-1.047-2.508h0a3.968,3.968,0,0,0-2.666-1.016h0l.1-4h-4.6l-.1,4h-.667a1.778,1.778,0,1,0,0,3.555h.667v5.682A5.555,5.555,0,0,0,508.1,69.59a6.154,6.154,0,0,0,4.381,1.46,8.476,8.476,0,0,0,2.1-.254,4.761,4.761,0,0,0,1.682-.762Z"
+                                  transform="translate(-406.839 -46.39)" fill="#243746"/>
+                        </g>
+                        <g id="Group_345" data-name="Group 345">
+                            <circle id="Ellipse_63" data-name="Ellipse 63" cx="27.299" cy="27.299" r="27.299"
+                                    fill="#243746"/>
+                            <path id="Path_808" data-name="Path 808"
+                                  d="M41.283,40.462l2.666-2.635.222-.222a6.953,6.953,0,0,0,.667-.794,7.364,7.364,0,1,0-12.126-.349,6.158,6.158,0,0,0,.825,1.079l.317.317,2.6,2.6-5.65,5.555L12.9,28.146A27.711,27.711,0,0,0,11,31.034L28.363,48.4l-2.571,2.539-.381.381a7.237,7.237,0,0,0-2,4.6h0a6.912,6.912,0,0,0,1.238,4.508,7.364,7.364,0,0,0,13.078-1.778,6.285,6.285,0,0,0,.349-2.7,7.364,7.364,0,0,0-2.127-4.825l-2.762-2.762,5.682-5.523L56.742,60.714a27.139,27.139,0,0,0,1.873-2.92ZM33.538,53.6a3.968,3.968,0,1,1-5.714.127l.286-.317,2.635-2.6Zm2.444-18.411a3.968,3.968,0,1,1,5.777.1l-.127.127L38.87,38.081Z"
+                                  transform="translate(-7.508 -17.131)" fill="#fff"/>
+                            <g id="Group_344" data-name="Group 344" transform="translate(18.062 18.189)">
+                                <path id="Path_809" data-name="Path 809"
+                                      d="M104.006,59.712l-.127.1-2.666,2.635L98.8,60.062l2.73-2.7.063-.063Z"
+                                      transform="translate(-85.5 -57.3)" fill="url(#linear-gradient)"/>
+                                <path id="Path_810" data-name="Path 810"
+                                      d="M62.074,100.844l-2.635,2.571-.159.127L56.9,101.162l.222-.222L59.693,98.4Z"
+                                      transform="translate(-56.9 -85.354)" fill="url(#linear-gradient-2)"/>
+                            </g>
+                        </g>
+                    </g>
                 </g>
             </svg>
-            <h1>Updating phpList to the latest version</h1>
+
+            <h1 style="font-family: 'Montserrat', Regular;font-size: 18px;">Updating phpList to the latest version</h1>
         </div>
         <div id="steps">
-            <div id="first-step"> </div>
+            <div id="first-step"></div>
             <div class="step">
                 <div class="step-image active">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 27.482 25.403">
-                        <defs>
-                            <style>
-                                .cls-1 {
-                                    fill: #8a9798;
-                                }
-                            </style>
-                        </defs>
-                        <g id="initialize" data-name="Integrity check" transform="translate(0 -7.524)">
-                            <g id="Group_211" data-name="Group 211" transform="translate(0 7.524)">
-                                <path id="Path_218" data-name="Path 218" class="cls-1" d="M23.808,16.226v-.994l3.674-.171V13.218l-3.674-.171v-.765H20.935V8.911A1.388,1.388,0,0,0,19.55,7.524H7.932A1.388,1.388,0,0,0,6.546,8.911v3.372H3.674v.765L0,13.218v1.844l3.674.171v.994H6.546v2.142H3.674v.763L0,19.3v1.843l3.674.172v.994H6.546v2.372H3.674v.765L0,25.619v1.843l3.674.171v.994H6.546v2.914a1.387,1.387,0,0,0,1.386,1.385H19.55a1.386,1.386,0,0,0,1.385-1.385V28.627h2.873v-.994l3.674-.171V25.619l-3.674-.171v-.765H20.935V22.311h2.873v-.994l3.674-.172V19.3l-3.674-.171v-.763H20.935V16.226Zm2.946,10.087v.452l-3.674.171v.96H21.05V25.412h2.03v.732ZM23.08,20.625v.959H21.05V19.1h2.03v.732L26.754,20v.454Zm3.674-6.71v.453l-3.674.171v.96H21.05V13.011h2.03v.732ZM19.55,32.2H7.932a.658.658,0,0,1-.657-.656V8.911a.658.658,0,0,1,.657-.658H19.55a.658.658,0,0,1,.656.658v22.63A.657.657,0,0,1,19.55,32.2ZM.728,26.766v-.452L4.4,26.143v-.732h2.03V27.9H4.4v-.96Zm0-6.313V20L4.4,19.828V19.1h2.03v2.486H4.4v-.959Zm0-6.086v-.453L4.4,13.743v-.732h2.03V15.5H4.4v-.96Z" transform="translate(0 -7.524)"/>
-                                <circle id="Ellipse_53" data-name="Ellipse 53" class="cls-1" cx="0.9" cy="0.9" r="0.9" transform="translate(8.193 1.813)"/>
-                                <circle id="Ellipse_54" data-name="Ellipse 54" class="cls-1" cx="0.9" cy="0.9" r="0.9" transform="translate(8.193 5.813)"/>
-                                <circle id="Ellipse_55" data-name="Ellipse 55" class="cls-1" cx="0.9" cy="0.9" r="0.9" transform="translate(17.193 21.813)"/>
+
+                    <svg xmlns="http://www.w3.org/2000/svg" width="27.483" height="25.403" viewBox="0 0 27.483 25.403">
+                        <g id="Integrity_check" data-name="Integrity check" transform="translate(0 0)">
+                            <g id="Group_211" data-name="Group 211">
+                                <g id="Path_218" data-name="Path 218" transform="translate(0 -7.524)" fill="#fff">
+                                    <path d="M23.808,16.226v-.994l3.674-.171V13.218l-3.674-.171v-.765H20.935V8.911A1.388,1.388,0,0,0,19.55,7.524H7.932A1.388,1.388,0,0,0,6.546,8.911v3.372H3.674v.765L0,13.218v1.844l3.674.171v.994H6.546v2.142H3.674v.763L0,19.3v1.843l3.674.172v.994H6.546v2.372H3.674v.765L0,25.619v1.843l3.674.171v.994H6.546v2.914a1.387,1.387,0,0,0,1.386,1.385H19.55a1.386,1.386,0,0,0,1.385-1.385V28.627h2.873v-.994l3.674-.171V25.619l-3.674-.171v-.765H20.935V22.311h2.873v-.994l3.674-.172V19.3l-3.674-.171v-.763H20.935V16.226Zm2.946,10.087v.452l-3.674.171v.96H21.05V25.412h2.03v.732ZM23.08,20.625v.959H21.05V19.1h2.03v.732L26.754,20v.454Zm3.674-6.71v.453l-3.674.171v.96H21.05V13.011h2.03v.732ZM19.55,32.2H7.932a.658.658,0,0,1-.657-.656V8.911a.658.658,0,0,1,.657-.658H19.55a.658.658,0,0,1,.656.658v22.63A.657.657,0,0,1,19.55,32.2ZM.728,26.766v-.452L4.4,26.143v-.732h2.03V27.9H4.4v-.96Zm0-6.313V20L4.4,19.828V19.1h2.03v2.486H4.4v-.959Zm0-6.086v-.453L4.4,13.743v-.732h2.03V15.5H4.4v-.96Z"
+                                          stroke="none"/>
+                                    <path d="M 7.931596755981445 7.524005889892578 L 19.55012512207031 7.524005889892578 C 20.31339645385742 7.524005889892578 20.93525695800781 8.146415710449219 20.93525695800781 8.91064453125 L 20.93525695800781 12.28284454345703 L 23.80833625793457 12.28284454345703 L 23.80833625793457 13.04763412475586 L 27.48283576965332 13.21833419799805 L 27.48283576965332 15.06194496154785 L 23.80833625793457 15.23264503479004 L 23.80833625793457 16.22646522521973 L 20.93525695800781 16.22646522521973 L 20.93525695800781 18.36890411376953 L 23.80833625793457 18.36890411376953 L 23.80833625793457 19.13216400146484 L 27.48283576965332 19.30328559875488 L 27.48283576965332 21.14592552185059 L 23.80833625793457 21.31759452819824 L 23.80833625793457 22.31141471862793 L 20.93525695800781 22.31141471862793 L 20.93525695800781 24.68343353271484 L 23.80833625793457 24.68343353271484 L 23.80833625793457 25.44821548461914 L 27.48283576965332 25.61934471130371 L 27.48283576965332 27.4625358581543 L 23.80833625793457 27.6336555480957 L 23.80833625793457 28.62747573852539 L 20.93525695800781 28.62747573852539 L 20.93525695800781 31.54160499572754 C 20.93525695800781 32.3063850402832 20.31339645385742 32.92672348022461 19.55012512207031 32.92672348022461 L 7.931735992431641 32.92672348022461 C 7.167505264282227 32.92672348022461 6.545646667480469 32.3063850402832 6.545646667480469 31.54160499572754 L 6.545646667480469 28.62747573852539 L 3.673526763916016 28.62747573852539 L 3.673526763916016 27.6336555480957 L -3.814697265625e-06 27.4625358581543 L -3.814697265625e-06 25.61934471130371 L 3.673526763916016 25.4482250213623 L 3.673526763916016 24.68344497680664 L 6.545646667480469 24.68344497680664 L 6.545646667480469 22.31141471862793 L 3.673526763916016 22.31141471862793 L 3.673526763916016 21.31759452819824 L -3.814697265625e-06 21.14592552185059 L -3.814697265625e-06 19.30328559875488 L 3.673526763916016 19.13216400146484 L 3.673526763916016 18.36890411376953 L 6.545646667480469 18.36890411376953 L 6.545646667480469 16.22646522521973 L 3.673526763916016 16.22646522521973 L 3.673526763916016 15.23264503479004 L -3.814697265625e-06 15.06194496154785 L -3.814697265625e-06 13.21833419799805 L 3.673526763916016 13.04763412475586 L 3.673526763916016 12.28284454345703 L 6.545505523681641 12.28284454345703 L 6.545505523681641 8.91064453125 C 6.545505523681641 8.146274566650391 7.167366027832031 7.524005889892578 7.931596755981445 7.524005889892578 Z M 19.55012512207031 32.19705581665039 C 19.91213607788086 32.19705581665039 20.20654678344727 31.90222549438477 20.20640563964844 31.54063415527344 L 20.20640563964844 8.91064453125 C 20.20640563964844 8.547115325927734 19.91157531738281 8.252296447753906 19.54998588562012 8.252296447753906 L 7.931596755981445 8.252296447753906 C 7.569036483764648 8.252296447753906 7.274215698242188 8.547115325927734 7.274215698242188 8.91064453125 L 7.274215698242188 31.54063415527344 C 7.274215698242188 31.90222549438477 7.569036483764648 32.19705581665039 7.931596755981445 32.19705581665039 L 19.55012512207031 32.19705581665039 Z M 23.07963562011719 15.49775505065918 L 23.07963562011719 14.5380744934082 L 26.75412559509277 14.3669548034668 L 26.75412559509277 13.91428375244141 L 23.07963562011719 13.74261474609375 L 23.07963562011719 13.01100540161133 L 21.04997634887695 13.01100540161133 L 21.04997634887695 15.49775505065918 L 23.07963562011719 15.49775505065918 Z M 6.432306289672852 15.49830436706543 L 6.432306289672852 13.01155471801758 L 4.402095794677734 13.01155471801758 L 4.402095794677734 13.7431640625 L 0.7275962829589844 13.91428375244141 L 0.7275962829589844 14.3669548034668 L 4.402095794677734 14.53863525390625 L 4.402095794677734 15.49830436706543 L 6.432306289672852 15.49830436706543 Z M 6.432306289672852 21.58229446411133 L 6.432306289672852 19.09609413146973 L 4.402095794677734 19.09609413146973 L 4.402095794677734 19.82825469970703 L 0.7275962829589844 19.99937438964844 L 0.7275962829589844 20.45288467407227 L 4.402095794677734 20.62358474731445 L 4.402095794677734 21.58229446411133 L 6.432306289672852 21.58229446411133 Z M 23.07963562011719 21.58325386047363 L 23.07963562011719 20.62455558776855 L 26.75412559509277 20.4539852142334 L 26.75412559509277 20.00033378601074 L 23.07963562011719 19.82922554016113 L 23.07963562011719 19.09705543518066 L 21.04997634887695 19.09705543518066 L 21.04997634887695 21.58325386047363 L 23.07963562011719 21.58325386047363 Z M 6.432306289672852 27.89696502685547 L 6.432306289672852 25.41118431091309 L 4.402095794677734 25.41118431091309 L 4.402095794677734 26.14278411865234 L 0.7275962829589844 26.31391525268555 L 0.7275962829589844 26.76603507995605 L 4.402095794677734 26.93673515319824 L 4.402095794677734 27.89696502685547 L 6.432306289672852 27.89696502685547 Z M 23.07963562011719 27.89738464355469 L 23.07963562011719 26.93715476989746 L 26.75412559509277 26.76603507995605 L 26.75412559509277 26.31391525268555 L 23.07963562011719 26.14320373535156 L 23.07963562011719 25.41159439086914 L 21.04997634887695 25.41159439086914 L 21.04997634887695 27.89738464355469 L 23.07963562011719 27.89738464355469 Z"
+                                          stroke="none" fill="#707070"/>
+                                </g>
+                                <g id="Ellipse_53" data-name="Ellipse 53" transform="translate(8.193 1.813)" fill="#fff"
+                                   stroke="#707070" stroke-width="1">
+                                    <circle cx="0.9" cy="0.9" r="0.9" stroke="none"/>
+                                    <circle cx="0.9" cy="0.9" r="0.4" fill="none"/>
+                                </g>
+                                <g id="Ellipse_54" data-name="Ellipse 54" transform="translate(8.193 5.813)" fill="#fff"
+                                   stroke="#707070" stroke-width="1">
+                                    <circle cx="0.9" cy="0.9" r="0.9" stroke="none"/>
+                                    <circle cx="0.9" cy="0.9" r="0.4" fill="none"/>
+                                </g>
+                                <g id="Ellipse_55" data-name="Ellipse 55" transform="translate(17.193 21.813)"
+                                   fill="#fff" stroke="#707070" stroke-width="1">
+                                    <circle cx="0.9" cy="0.9" r="0.9" stroke="none"/>
+                                    <circle cx="0.9" cy="0.9" r="0.4" fill="none"/>
+                                </g>
                             </g>
                         </g>
                     </svg>
+
                 </div>
-                <hr class="divider" />
+                <hr class="divider"/>
                 <div class="clear"></div>
                 <h2>Initialize</h2>
             </div>
             <div class="step">
                 <div class="step-image ">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 27.337 27.637">
-                        <defs>
-                            <style>
-                                .cls-1 {
-                                    fill: #8a9798;
-                                    fill-rule: evenodd;
-                                }
-                            </style>
-                        </defs>
-                        <g id="back-up" data-name="Back up files" transform="translate(0 0.001)">
-                            <path id="Path_214" data-name="Path 214" class="cls-1" d="M48.3,15.4c.01-.012.019-.025.028-.038v0c.008-.013.016-.026.023-.039l.006-.012.015-.032.005-.012c.006-.015.011-.03.016-.045v0c0-.014.008-.029.011-.044l0-.013c0-.012,0-.024.005-.035s0-.009,0-.014,0-.032,0-.048V8.615c0-.016,0-.032,0-.048s0-.009,0-.014,0-.024-.005-.036l0-.013c0-.015-.007-.03-.011-.044v0c0-.015-.01-.03-.016-.045L48.37,8.4l-.015-.032-.006-.012c-.007-.013-.015-.026-.023-.039v0c-.009-.013-.018-.026-.028-.038l-.009-.011-.024-.027-.006-.006L40.181.157a.54.54,0,0,0-.763,0L29.946,9.629H26.669a.54.54,0,1,0,0,1.08h2.2l-2.983,2.983H22.821a.54.54,0,1,0,0,1.08H24.8l-.642.642a.54.54,0,0,0,0,.763l1.578,1.578H23.777a.54.54,0,1,0,0,1.08h3.042L29.8,21.817H26.669a.54.54,0,1,0,0,1.08h4.212l4.581,4.581a.54.54,0,0,0,.763,0L48.257,15.447l.005-.006.025-.027L48.3,15.4ZM45.413,11.84l1.922-1.922v3.845ZM35.844,26.333,32.408,22.9h1.643a.54.54,0,0,0,0-1.08H31.329l-2.983-2.983h1.371a.54.54,0,1,0,0-1.08H27.266L25.306,15.8l1.024-1.024h5.791a.54.54,0,1,0,0-1.08H27.41l2.983-2.983h6.459a.54.54,0,0,0,0-1.08h-5.38L39.8,1.3l7.312,7.312-2.844,2.844a.54.54,0,0,0,0,.763l2.844,2.844Zm0,0" transform="translate(-21.078)"/>
-                            <path id="Path_215" data-name="Path 215" class="cls-1" d="M133.485,104.217h2.646a.54.54,0,1,0,0-1.08h-2.646a.54.54,0,1,0,0,1.08Zm0,0" transform="translate(-125.769 -97.571)"/>
-                            <path id="Path_216" data-name="Path 216" class="cls-1" d="M54.122,179.482a.54.54,0,1,0-.54-.54A.541.541,0,0,0,54.122,179.482Zm0,0" transform="translate(-50.69 -168.773)"/>
-                            <path id="Path_217" data-name="Path 217" class="cls-1" d="M.54,328.934a.54.54,0,1,0,.54.54A.541.541,0,0,0,.54,328.934Zm0,0" transform="translate(0 -311.179)"/>
+
+                    <svg xmlns="http://www.w3.org/2000/svg" width="27.337" height="27.637" viewBox="0 0 27.337 27.637">
+                        <g id="Replace_files" data-name="Replace files" transform="translate(0 0)">
+                            <path id="Path_214" data-name="Path 214"
+                                  d="M48.3,15.4c.01-.012.019-.025.028-.038v0c.008-.013.016-.026.023-.039l.006-.012.015-.032.005-.012c.006-.015.011-.03.016-.045v0c0-.014.008-.029.011-.044l0-.013c0-.012,0-.024.005-.035s0-.009,0-.014,0-.032,0-.048V8.615c0-.016,0-.032,0-.048s0-.009,0-.014,0-.024-.005-.036l0-.013c0-.015-.007-.03-.011-.044v0c0-.015-.01-.03-.016-.045L48.37,8.4l-.015-.032-.006-.012c-.007-.013-.015-.026-.023-.039v0c-.009-.013-.018-.026-.028-.038l-.009-.011-.024-.027-.006-.006L40.181.157a.54.54,0,0,0-.763,0L29.946,9.629H26.669a.54.54,0,1,0,0,1.08h2.2l-2.983,2.983H22.821a.54.54,0,1,0,0,1.08H24.8l-.642.642a.54.54,0,0,0,0,.763l1.578,1.578H23.777a.54.54,0,1,0,0,1.08h3.042L29.8,21.817H26.669a.54.54,0,1,0,0,1.08h4.212l4.581,4.581a.54.54,0,0,0,.763,0L48.257,15.447l.005-.006.025-.027L48.3,15.4ZM45.413,11.84l1.922-1.922v3.845ZM35.844,26.333,32.408,22.9h1.643a.54.54,0,0,0,0-1.08H31.329l-2.983-2.983h1.371a.54.54,0,1,0,0-1.08H27.266L25.306,15.8l1.024-1.024h5.791a.54.54,0,1,0,0-1.08H27.41l2.983-2.983h6.459a.54.54,0,0,0,0-1.08h-5.38L39.8,1.3l7.312,7.312-2.844,2.844a.54.54,0,0,0,0,.763l2.844,2.844Zm0,0"
+                                  transform="translate(-21.078 0.001)" fill="#253746" fill-rule="evenodd"/>
+                            <path id="Path_215" data-name="Path 215"
+                                  d="M133.485,104.217h2.646a.54.54,0,1,0,0-1.08h-2.646a.54.54,0,1,0,0,1.08Zm0,0"
+                                  transform="translate(-125.769 -97.57)" fill="#253746" fill-rule="evenodd"/>
+                            <path id="Path_216" data-name="Path 216"
+                                  d="M54.122,179.482a.54.54,0,1,0-.54-.54A.541.541,0,0,0,54.122,179.482Zm0,0"
+                                  transform="translate(-50.69 -168.772)" fill="#253746" fill-rule="evenodd"/>
+                            <path id="Path_217" data-name="Path 217"
+                                  d="M.54,328.934a.54.54,0,1,0,.54.54A.541.541,0,0,0,.54,328.934Zm0,0"
+                                  transform="translate(0 -311.179)" fill="#253746" fill-rule="evenodd"/>
                         </g>
                     </svg>
 
+
                 </div>
-                <hr class="divider" />
+                <hr class="divider"/>
                 <div class="clear"></div>
                 <h2>Back Up</h2>
             </div>
             <div class="step">
                 <div class="step-image">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 23.015 21.33">
-                        <defs>
-                            <style>
-                                .path {
-                                    fill: #8a9798;
-                                }
-                            </style>
-                        </defs>
-                        <g id="foo" transform="translate(0 -17.25)">
-                            <g class="path" transform="translate(0 17.25)">
-                                <path class="cls-1" d="M22.356,228.248a.657.657,0,0,0-.659.659v6a2.959,2.959,0,0,1-2.955,2.955H4.274a2.959,2.959,0,0,1-2.955-2.955v-6.1a.659.659,0,0,0-1.319,0v6.1a4.278,4.278,0,0,0,4.274,4.274H18.741a4.278,4.278,0,0,0,4.274-4.274v-6A.66.66,0,0,0,22.356,228.248Z" transform="translate(0 -217.849)"/>
-                                <path class="path" d="M140.615,33.344a.664.664,0,0,0,.464.2.643.643,0,0,0,.464-.2l4.191-4.191a.66.66,0,1,0-.933-.933l-3.062,3.067V17.909a.659.659,0,1,0-1.319,0V31.288l-3.067-3.067a.66.66,0,0,0-.933.933Z" transform="translate(-129.571 -17.25)"/>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="23.015" height="21.33" viewBox="0 0 23.015 21.33">
+                        <g id="download" transform="translate(0 0)">
+                            <g id="Group_210" data-name="Group 210">
+                                <path id="Path_211" data-name="Path 211"
+                                      d="M22.356,228.248a.657.657,0,0,0-.659.659v6a2.959,2.959,0,0,1-2.955,2.955H4.274a2.959,2.959,0,0,1-2.955-2.955v-6.1a.659.659,0,0,0-1.319,0v6.1a4.278,4.278,0,0,0,4.274,4.274H18.741a4.278,4.278,0,0,0,4.274-4.274v-6A.66.66,0,0,0,22.356,228.248Z"
+                                      transform="translate(0 -217.849)" fill="#253746"/>
+                                <path id="Path_212" data-name="Path 212"
+                                      d="M140.615,33.344a.664.664,0,0,0,.464.2.643.643,0,0,0,.464-.2l4.191-4.191a.66.66,0,1,0-.933-.933l-3.062,3.067V17.909a.659.659,0,1,0-1.319,0V31.288l-3.067-3.067a.66.66,0,0,0-.933.933Z"
+                                      transform="translate(-129.571 -17.25)" fill="#253746"/>
                             </g>
                         </g>
                     </svg>
                 </div>
-                <hr class="divider" />
+                <hr class="divider"/>
                 <div class="clear"></div>
                 <h2>Download</h2>
             </div>
             <div class="step last-step">
                 <div class="step-image">
-                    <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-                         viewBox="0 0 22.5 21.1" style="enable-background:new 0 0 22.5 21.1;" xml:space="preserve">
-                        <style type="text/css">
-                            .st0{
-                                fill:#8A9798;
-                            }
-                        </style>
-                        <path class="st0" d="M22,5.5c-0.3-0.3-0.7-0.3-1,0C18.5,8,9.8,16.6,7.5,18.8l-6-6c-0.3-0.3-0.7-0.3-1,0s-0.3,0.7,0,1l7,7L8,20.4
-	c0,0,11.1-11,13.9-13.8C22.3,6.3,22.3,5.8,22,5.5z"/>
-                </svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22.512" height="16.01" viewBox="0 0 22.512 16.01">
+                        <path id="Path_219" data-name="Path 219"
+                              d="M16100.607-997.888c-2.889,2.889-14.332,14.2-14.332,14.2l-6.68-6.679"
+                              transform="translate(-16078.847 998.638)" fill="none" stroke="#253746"
+                              stroke-linecap="round" stroke-width="1.5"/>
+                    </svg>
+
                 </div>
                 <div class="clear"></div>
                 <h2>Perform update</h2>
             </div>
             <div class="clear"></div>
         </div>
+
         <div id="display">
             <span id="current-step" class="hidden"> </span>
-            <span id="success-message">Updater is loading.</span><br>
+            <span id="success-message">Updater is loading.<br/>
+             There is a new update available!</span><br>
             <span id="error-message"></span><br>
+            <div>
+                <button id="next-step" class="right">Next</button>
+                <button id="database-upgrade" class="right" style="visibility: hidden;">Upgrade database</button>
+            </div>
         </div>
-        <button id="next-step" class="right">Next</button>
-        <button id="database-upgrade" class="right" style="visibility:hidden;">Upgrade database</button>
+
+    </div>
     </div>
 
+    <div class="outer">
+        <button class="info-footer">
+            <!--            <div class="fa fa-chevron-right rotate"></div>-->
+<!--            <i class="arrow down rotate"></i>-->
+<!--            <a href="#"><i class="arrow-down rotate"></i></a>-->
+            <div class="arrow-down rotate"></div>
+        </button>
+
+        <div class="inner">
+            <div id="container">
+                <div id="left">
+                    <ul>
+                        <li class="final">The Final Upgrade?</li>
+                        <li class="migrate">Migrate to phpList.com and forget about the tech</li>
+                    </ul>
+                    <ul style="float:left;margin-right: 18px;">
+                        <li>
+                            <div>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="8.106" height="6.087"
+                                     viewBox="0 0 8.106 6.087" style="margin-right: 7px;">
+                                    <path id="Path_823" data-name="Seamless background updating"
+                                          d="M14218.925-111.4l2.226,2.226,4.88-4.88"
+                                          transform="translate(-14218.424 114.55)" fill="none" stroke="#21ae8a"
+                                          stroke-linecap="round" stroke-width="1"/>
+                                </svg>
+                                Seamless background updating
+                            </div>
+                        </li>
+                        <li>
+                            <div>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="8.106" height="6.087"
+                                     viewBox="0 0 8.106 6.087" style="margin-right: 7px;">
+                                    <path id="Path_823" data-name="Seamless background updating"
+                                          d="M14218.925-111.4l2.226,2.226,4.88-4.88"
+                                          transform="translate(-14218.424 114.55)" fill="none" stroke="#21ae8a"
+                                          stroke-linecap="round" stroke-width="1"/>
+                                </svg>
+                                Managed DMARC, SPF, and DKIM
+                            </div>
+                        </li>
+                        <li>
+                            <div>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="8.106" height="6.087"
+                                     viewBox="0 0 8.106 6.087" style="margin-right: 7px;">
+                                    <path id="Path_823" data-name="Seamless background updating"
+                                          d="M14218.925-111.4l2.226,2.226,4.88-4.88"
+                                          transform="translate(-14218.424 114.55)" fill="none" stroke="#21ae8a"
+                                          stroke-linecap="round" stroke-width="1"/>
+                                </svg>
+                                Database import for existing data
+                            </div>
+                        </li>
+                    </ul>
+                    <ul>
+                        <li>
+                            <div>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="8.106" height="6.087"
+                                     viewBox="0 0 8.106 6.087" style="margin-right: 7px;">
+                                    <path id="Path_823" data-name="Seamless background updating"
+                                          d="M14218.925-111.4l2.226,2.226,4.88-4.88"
+                                          transform="translate(-14218.424 114.55)" fill="none" stroke="#21ae8a"
+                                          stroke-linecap="round" stroke-width="1"/>
+                                </svg>
+                                Expert technical support
+                            </div>
+                        </li>
+                        <li>
+                            <div>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="8.106" height="6.087"
+                                     viewBox="0 0 8.106 6.087" style="margin-right: 7px;">
+                                    <path id="Path_823" data-name="Seamless background updating"
+                                          d="M14218.925-111.4l2.226,2.226,4.88-4.88"
+                                          transform="translate(-14218.424 114.55)" fill="none" stroke="#21ae8a"
+                                          stroke-linecap="round" stroke-width="1"/>
+                                </svg>
+                                Scale up to 30 million messages per month
+                            </div>
+                        </li>
+                        <li>
+                            <div>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="8.106" height="6.087"
+                                     viewBox="0 0 8.106 6.087" style="margin-right: 7px;">
+                                    <path id="Path_823" data-name="Seamless background updating"
+                                          d="M14218.925-111.4l2.226,2.226,4.88-4.88"
+                                          transform="translate(-14218.424 114.55)" fill="none" stroke="#21ae8a"
+                                          stroke-linecap="round" stroke-width="1"/>
+                                </svg>
+                                Custom domains and unlimited users
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+                <div id="right">
+                    <div id="sqr">
+                        <!--                        <div id="triangle_down"></div>-->
+                        <p style="float: left;color: rgb(75, 140, 202);padding: 5px;font-weight: 600;">Great value</p>
+                        <br>
+                        <p style="text-align:center; color:#253746;margin-top: 12px;">9000 messages</p><br>
+                        <p style="text-align:center; color:#4B8CCA; font-size: 24px; font-family: 'Montserrat', Regular">
+                            Price $1</p>
+                        <p style="text-align:center; color:#4B8CCA; margin-top: 12px; font-size: 12px; font-family: 'Montserrat', Regular">
+                            3000 Subscribers</p><br>
+                        <a href="https://phplist.com/chooseplan" class="book">Book</a>
+                    </div>
+                </div>
+            </div>
+        </div><!-- .inner -->
+    </div><!-- .outer -->
 
 
+    <script type="text/javascript" src="../admin/js/jquery-3.3.1.min.js"></script>
+    <script type="text/javascript">
+        $('.outer button').on("click", function () {
+            $('.inner').slideToggle(1000, function () {
+                $('.inner p').show(100);
+            });
+        });
+    </script>
+    <script type="text/javascript">
+        $(".rotate").click(function () {
+            $(this).toggleClass("down");
+        })
+    </script>
     <script>
         let previousFormActions = null;
+
         function takeAction(action, formValues, callback) {
             let req = new XMLHttpRequest();
-            let url = "<?php echo htmlentities( $_SERVER['REQUEST_URI'] )?>";
+            let url = "<?php echo htmlentities($_SERVER['REQUEST_URI'])?>";
             req.open('POST', url, true);
             req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-            req.onload  = callback;
+            req.onload = callback;
 
             let body = "action=" + action;
 
             if (previousFormActions !== null) {
                 body = body + "&" + previousFormActions;
             }
-            if(formValues) {
+            if (formValues) {
                 body = body + "&" + formValues;
                 previousFormActions = previousFormActions + "&" + formValues;
             }
@@ -1230,15 +1741,17 @@ if(isset($_POST['action'])) {
             executeNextStep();
         });
 
-        function setCurrentStep(action){
-            document.getElementById("current-step").innerText=action;
+        function setCurrentStep(action) {
+            document.getElementById("current-step").innerText = action;
         }
-        function showErrorMessage(error){
-            document.getElementById("error-message").innerText=error;
+
+        function showErrorMessage(error) {
+            document.getElementById("error-message").innerText = error;
         }
-        function showSuccessMessage(success){
-            document.getElementById("error-message").innerText='';
-            document.getElementById("success-message").innerHTML=success;
+
+        function showSuccessMessage(success) {
+            document.getElementById("error-message").innerText = '';
+            document.getElementById("success-message").innerHTML = success;
         }
 
         function setCurrentActionItem(step) {
@@ -1264,7 +1777,7 @@ if(isset($_POST['action'])) {
             };
 
             let steps = document.querySelectorAll('.step-image');
-            steps.forEach(function(element) {
+            steps.forEach(function (element) {
                 element.classList.remove('active');
             });
             steps[stepActionMap[step]].classList.add('active');
@@ -1289,27 +1802,27 @@ if(isset($_POST['action'])) {
                     if (autocontinue === true) {
                         executeNextStep();
                     }
-                    if(nextUrl) {
-                        document.getElementById("next-step").addEventListener("click",function () {
+                    if (nextUrl) {
+                        document.getElementById("next-step").addEventListener("click", function () {
                             window.location = nextUrl;
                         });
                     }
                 } else {
                     showErrorMessage(responseMessage);
-                    if(retryResponse === true) {
-                        setCurrentStep(nextStep-1);
+                    if (retryResponse === true) {
+                        setCurrentStep(nextStep - 1);
                         document.getElementById('next-step').disabled = false;
                     }
                 }
             });
         }
 
-        document.getElementById("next-step").addEventListener("click",function () {
+        document.getElementById("next-step").addEventListener("click", function () {
             let backupform = document.querySelector('form');
             if (backupform !== null) {
                 let formParams = new URLSearchParams(new FormData(backupform)).toString();
                 executeNextStep(formParams);
-            }else {
+            } else {
                 executeNextStep(null);
             }
 
