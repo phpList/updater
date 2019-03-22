@@ -1687,11 +1687,11 @@ if (isset($_POST['action'])) {
                         <!--                        <div id="triangle_down"></div>-->
                         <p style="float: left;color: rgb(75, 140, 202);padding: 5px;font-weight: 600;">Great value</p>
                         <br>
-                        <p style="text-align:center; color:#253746;margin-top: 12px;">9000 messages</p><br>
+                        <p style="text-align:center; color:#253746;margin-top: 12px;">9,000 messages</p><br>
                         <p style="text-align:center; color:#4B8CCA; font-size: 24px; font-family: 'Montserrat', Regular">
                             Price $1</p>
                         <p style="text-align:center; color:#4B8CCA; margin-top: 12px; font-size: 12px; font-family: 'Montserrat', Regular">
-                            3000 Subscribers</p><br>
+                            3,000 Subscribers</p><br>
                         <a href="https://phplist.com/chooseplan" class="book">Book</a>
                     </div>
                 </div>
