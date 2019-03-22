@@ -1602,7 +1602,7 @@ if (isset($_POST['action'])) {
             <div id="container">
                 <div id="left">
                     <ul>
-                        <li class="final">The Final Upgrade?</li>
+                        <li class="final">Seamless upgrades forever</li>
                         <li class="migrate">Migrate to phpList.com and forget about the tech</li>
                     </ul>
                     <ul style="float:left;margin-right: 18px;">
