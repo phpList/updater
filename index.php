@@ -1653,7 +1653,7 @@ if (isset($_POST['action'])) {
                                           transform="translate(-14218.424 114.55)" fill="none" stroke="#21ae8a"
                                           stroke-linecap="round" stroke-width="1"/>
                                 </svg>
-                                Expert technical support
+                                Custom domains and unlimited users
                             </div>
                         </li>
                         <li>
@@ -1677,7 +1677,7 @@ if (isset($_POST['action'])) {
                                           transform="translate(-14218.424 114.55)" fill="none" stroke="#21ae8a"
                                           stroke-linecap="round" stroke-width="1"/>
                                 </svg>
-                                Custom domains and unlimited users
+                                Expert technical support
                             </div>
                         </li>
                     </ul>
