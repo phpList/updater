@@ -1639,7 +1639,7 @@ if (isset($_POST['action'])) {
                                           transform="translate(-14218.424 114.55)" fill="none" stroke="#21ae8a"
                                           stroke-linecap="round" stroke-width="1"/>
                                 </svg>
-                                Database import for existing data
+                                Database import for your data
                             </div>
                         </li>
                     </ul>
