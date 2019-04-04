@@ -1426,6 +1426,15 @@ if (isset($_POST['action'])) {
             div.cutomMinHeight {
                 min-height: 900px !important;
             }
+            p.paidSupport {
+                color: #8A9798;
+                font-size: 13px;
+                margin-top: 10px;
+            }
+            a.support {
+                color: #4b8cca;
+                text-decoration: none;
+            }
 
         </style>
     </head>
@@ -1688,6 +1697,7 @@ if (isset($_POST['action'])) {
                             </div>
                         </li>
                     </ul>
+                    <p class="paidSupport">Happy with your existing installation? Paid support by independent consultants <a href="https://www.phplist.org/paid-support/" class="support" target="_blank">here</a>.</p>
                 </div>
                 <div id="right">
                     <div id="sqr">
