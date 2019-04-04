@@ -1708,7 +1708,7 @@ if (isset($_POST['action'])) {
                             <p class="price">Price $1</p>
                             <p class="subscribers">3000 Subscribers</p>
                             <br>
-                            <input type="button" onclick="location.href='https://phplist.com/chooseplan';" value="Book"
+                            <input type="button" onclick="window.open('https://phplist.com/chooseplan')" value="Book"
                                    style="width: 90px;height: 30px; border: 1px dashed #21AE8A; background: #fff; margin: 0 auto;"
                                    class="book"/>
                         </div>
