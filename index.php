@@ -1135,6 +1135,7 @@ if (isset($_POST['action'])) {
                 font-size: 20px;
                 text-align: center;
                 margin-bottom: 94px;
+                cursor: pointer;
             }
 
             #logo img {
@@ -1489,7 +1490,7 @@ if (isset($_POST['action'])) {
 
     <div id="center">
         <div class="fixed">
-            <div id="logo" title="Go back to phpList dashboard">
+            <div id="logo" title="Go back to phpList dashboard" onclick="location.href='../admin';">
                 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="175"
                      height="54.598" viewBox="0 0 175 54.598">
                     <defs>
