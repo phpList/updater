@@ -80,7 +80,6 @@ The updater is at the moment solely focused on replacing the files of the core i
 ### Notes
 
 - The updater stops when it finds unexpected files (not from phpList default installation) and lists them. To continue, you should delete these files or move them outside lists directory.
-- Any plugins that are not included in releases are removed and need to reinstalled following update (settings for those plugins in the database are not affected; reinstalling the plugins should make them work as before).
 - It is possible to override the backup checks by reloading the page when the backup check fails. Do not reload the page unless you wish to proceed without a backup in this case.
 - When the update process fails you should manually remove actions.txt file inside the config folder in order to reset the process and be able to try again.
 - The config directory is required to be writable because the "current step" of the automatic updater is saved inside it.
