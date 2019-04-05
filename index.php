@@ -181,6 +181,7 @@ class updater
             'ut.php' => 1,
             'updater' => 1,
             'base' => 1,
+            'api.php' =>1,
         );
 
         $existingFiles = scandir(__DIR__ . '/../');
