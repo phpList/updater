@@ -16,6 +16,7 @@ class updater
 
     const DOWNLOAD_PATH = '../tmp_uploaded_update';
     const ELIGIBLE_SESSION_KEY = 'phplist_updater_eligible';
+    const CONFIG_FILE = __DIR__ . '/../config/config.php';
 
     private $excludedFiles = array(
         'dl.php',
@@ -282,7 +283,7 @@ class updater
      */
     function getConnection()
     {
-        $standardConfig = __DIR__ . '/../config/config.php';
+        $standardConfig = self::CONFIG_FILE;
 
         if (isset($_SERVER['ConfigFile']) && is_file($_SERVER['ConfigFile'])) {
             include $_SERVER['ConfigFile'];
@@ -322,45 +323,68 @@ class updater
      */
     function addMaintenanceMode()
     {
-        $prepStmt = $this->getConnection()->prepare("SELECT * FROM phplist_config WHERE item=?");
+        $standardConfig = self::CONFIG_FILE;
+        if (isset($_SERVER['ConfigFile']) && is_file($_SERVER['ConfigFile'])) {
+            include $_SERVER['ConfigFile'];
+        } elseif (file_exists($standardConfig)) {
+            include $standardConfig;
+        } else {
+            throw new \UpdateException("Error: Cannot find config file");
+        }
+        if (isset($table_prefix)) {
+            $table_name = $table_prefix . 'config';
+        } else {
+            $table_name = 'phplist_config';
+        }
+        $prepStmt = $this->getConnection()->prepare("SELECT * FROM {$table_name} WHERE item=?");
         $prepStmt->execute(array('update_in_progress'));
         $result = $prepStmt->fetch(PDO::FETCH_ASSOC);
         if ($result === false) {
             // the row does not exist => no update running
             $this->getConnection()
-                ->prepare('INSERT INTO phplist_config(`item`,`editable`,`value`) VALUES (?,0,?)')
+                ->prepare("INSERT INTO {$table_name}(`item`,`editable`,`value`) VALUES (?,0,?)")
                 ->execute(array('update_in_progress', 1));
         }
         if ($result['update_in_progress'] == 0) {
             $this->getConnection()
-                ->prepare('UPDATE phplist_config SET `value`=? WHERE `item`=?')
+                ->prepare("UPDATE {$table_name} SET `value`=? WHERE `item`=?")
                 ->execute(array(1, 'update_in_progress'));
-
         } else {
             // the row exists and is not 0 => there is an update running
             return false;
         }
         $name = 'maintenancemode';
         $value = "Update process";
-        $sql = "UPDATE phplist_config SET value =?, editable =? where item =? ";
+        $sql = "UPDATE {$table_name} SET value =?, editable =? where item =? ";
         $this->getConnection()->prepare($sql)->execute(array($value, 0, $name));
-
     }
 
     /**
      *Clear the maintenance mode and remove the update_in_progress lock
+     * @throws UpdateException
      */
     function removeMaintenanceMode()
     {
+        $standardConfig = self::CONFIG_FILE;
+        if (isset($_SERVER['ConfigFile']) && is_file($_SERVER['ConfigFile'])) {
+            include $_SERVER['ConfigFile'];
+        } elseif (file_exists($standardConfig)) {
+            include $standardConfig;
+        } else {
+            throw new \UpdateException("Error: Cannot find config file");
+        }
+        if (isset($table_prefix)) {
+            $table_name = $table_prefix . 'config';
+        } else {
+            $table_name = 'phplist_config';
+        }
         $name = 'maintenancemode';
         $value = '';
-        $sql = "UPDATE phplist_config SET value =?, editable =? where item =? ";
+        $sql = "UPDATE {$table_name} SET value =?, editable =? where item =? ";
         $this->getConnection()->prepare($sql)->execute(array($value, 0, $name));
-
         $this->getConnection()
-            ->prepare('UPDATE phplist_config SET `value`=? WHERE `item`=?')
+            ->prepare("UPDATE {$table_name} SET `value`=? WHERE `item`=?")
             ->execute(array(0, "update_in_progress"));
-
     }
 
     /**
