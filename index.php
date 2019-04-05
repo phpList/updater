@@ -318,6 +318,7 @@ class updater
     /**
      *Set the maintenance mode
      * @return bool true - maintenance mode is set; false - maintenance mode could not be set because an update is already running
+     * @throws UpdateException
      */
     function addMaintenanceMode()
     {
@@ -668,6 +669,35 @@ class updater
     }
 
     /**
+     * Move plugins in temporary folder to prevent them from being overwritten.
+     * @throws UpdateException
+     */
+    function movePluginsInTempFolder()
+    {
+        $oldDir = __DIR__ . '/../admin/plugins';
+        $newDir = __DIR__ . '/../tmp_uploaded_update/tempplugins';
+        $state = rename($oldDir, $newDir);
+        if ($state === false) {
+            throw new UpdateException("Could not move plugins directory");
+        }
+    }
+
+    /**
+     * Move plugins back in admin directory.
+     * @throws UpdateException
+     */
+    function movePluginsInPlace()
+    {
+        $oldDir = realpath(__DIR__ . '/../tmp_uploaded_update/tempplugins');
+        $newDir = realpath(__DIR__ . '/../admin/plugins');
+        $this->rmdir_recursive($newDir);
+        $state = rename($oldDir, $newDir);
+        if ($state === false) {
+            throw new UpdateException("Could not move plugins directory to admin folder.");
+        }
+    }
+
+    /**
      * Update updater to a new location before temp folder is deleted!
      * @throws UpdateException
      */
@@ -832,21 +862,38 @@ if (isset($_POST['action'])) {
             break;
         case 12:
             try {
-                $update->deleteFiles();
-                echo(json_encode(array('continue' => true, 'response' => 'Old files have been deleted!', 'autocontinue' => true)));
+                $update->movePluginsInTempFolder();
+                echo(json_encode(array('continue' => true, 'response' => 'Backing up the plugins', 'autocontinue' => true)));
             } catch (\Exception $e) {
                 echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
             }
             break;
         case 13:
             try {
-                $update->moveNewFiles();
-                echo(json_encode(array('continue' => true, 'response' => 'Moved new files in place!', 'autocontinue' => true)));
+                $update->deleteFiles();
+                echo(json_encode(array('continue' => true, 'response' => 'Old files have been deleted!', 'autocontinue' => true)));
             } catch (\Exception $e) {
                 echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
             }
             break;
         case 14:
+            try {
+                $update->moveNewFiles();
+                echo(json_encode(array('continue' => true, 'response' => 'Moved new files in place!', 'autocontinue' => true)));
+
+            } catch (\Exception $e) {
+                echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
+            }
+            break;
+        case 15:
+            try {
+                $update->movePluginsInPlace();
+                echo(json_encode(array('continue' => true, 'response' => 'Moved plugins in place!', 'autocontinue' => true)));
+            } catch (\Exception $e) {
+                echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
+            }
+            break;
+        case 16:
             try {
                 $update->moveEntryPHPpoints();
                 echo(json_encode(array('continue' => true, 'response' => 'Moved new entry points in place!', 'autocontinue' => true)));
@@ -854,7 +901,7 @@ if (isset($_POST['action'])) {
                 echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
             }
             break;
-        case 15:
+        case 17:
             try {
                 $update->moveUpdater();
                 echo(json_encode(array('continue' => true, 'response' => 'Moved new entry points in place!', 'autocontinue' => true)));
@@ -862,7 +909,7 @@ if (isset($_POST['action'])) {
                 echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
             }
             break;
-        case 16:
+        case 18:
             try {
                 $update->deleteTemporaryFiles();
                 echo(json_encode(array('continue' => true, 'response' => 'Deleted temporary files!', 'autocontinue' => true)));
@@ -870,7 +917,7 @@ if (isset($_POST['action'])) {
                 echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
             }
             break;
-        case 17:
+        case 19:
             try {
                 $update->removeMaintenanceMode();
                 echo(json_encode(array('continue' => true, 'response' => 'Removed maintenance mode', 'autocontinue' => true)));
@@ -878,7 +925,7 @@ if (isset($_POST['action'])) {
                 echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
             }
             break;
-        case 18:
+        case 20:
             $writeStep = false;
             try {
                 $update->replaceNewUpdater();
@@ -984,6 +1031,7 @@ if (isset($_POST['action'])) {
 
             button.right {
                 background-color: #21AE8A;
+
                 color: white;
                 border-radius: 5px;
                 height: 40px;
@@ -994,7 +1042,6 @@ if (isset($_POST['action'])) {
                 margin-top: 20px;
                 border: none;
             }
-
 
             button:disabled {
                 background-color: lightgrey !important;
@@ -1569,6 +1616,7 @@ if (isset($_POST['action'])) {
                     <div class="clear"></div>
                     <h2>Initialize</h2>
                 </div>
+
                 <div class="step">
                     <div class="step-image ">
 
@@ -1630,6 +1678,7 @@ if (isset($_POST['action'])) {
                     <div class="clear"></div>
                     <h2>Perform update</h2>
                 </div>
+
                 <div class="clear"></div>
             </div>
 
@@ -1640,10 +1689,12 @@ if (isset($_POST['action'])) {
                 <div>
                     <button id="next-step" class="right">Next</button>
                     <button id="database-upgrade" class="right" style="visibility: hidden;">Upgrade database</button>
+
                 </div>
             </div>
         </div>
     </div>
+
     <!-- Info updater section -->
     <div class="outer">
         <button class="info-footer">
@@ -1737,6 +1788,7 @@ if (isset($_POST['action'])) {
         $("#center").addClass("cutomMinHeight");
         $(".fixed").addClass("cutomMinHeight");
     </script>
+
     <script>
         let previousFormActions = null;
 
@@ -1798,6 +1850,8 @@ if (isset($_POST['action'])) {
                 16: 3,
                 17: 3,
                 18: 3,
+                19: 3,
+                20: 3,
             };
 
             let steps = document.querySelectorAll('.step-image');
