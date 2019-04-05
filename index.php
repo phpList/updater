@@ -23,6 +23,7 @@ class updater
         'index.html',
         'lt.php',
         'ut.php',
+        'api.php',
     );
 
     public function isAuthenticated()
