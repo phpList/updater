@@ -16,7 +16,6 @@ class updater
 
     const DOWNLOAD_PATH = '../tmp_uploaded_update';
     const ELIGIBLE_SESSION_KEY = 'phplist_updater_eligible';
-    const CONFIG_FILE = __DIR__ . '/../config/config.php';
 
     private $excludedFiles = array(
         'dl.php',
@@ -285,7 +284,7 @@ class updater
      */
     function getConnection()
     {
-        $standardConfig = self::CONFIG_FILE;
+        $standardConfig = __DIR__ . '/../config/config.php';
 
         if (isset($_SERVER['ConfigFile']) && is_file($_SERVER['ConfigFile'])) {
             include $_SERVER['ConfigFile'];
@@ -325,7 +324,7 @@ class updater
      */
     function addMaintenanceMode()
     {
-        $standardConfig = self::CONFIG_FILE;
+        $standardConfig = __DIR__ . '/../config/config.php';
         if (isset($_SERVER['ConfigFile']) && is_file($_SERVER['ConfigFile'])) {
             include $_SERVER['ConfigFile'];
         } elseif (file_exists($standardConfig)) {
@@ -367,7 +366,7 @@ class updater
      */
     function removeMaintenanceMode()
     {
-        $standardConfig = self::CONFIG_FILE;
+        $standardConfig = __DIR__ . '/../config/config.php';
         if (isset($_SERVER['ConfigFile']) && is_file($_SERVER['ConfigFile'])) {
             include $_SERVER['ConfigFile'];
         } elseif (file_exists($standardConfig)) {
