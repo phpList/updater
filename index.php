@@ -1041,20 +1041,6 @@ if (isset($_POST['action'])) {
                 margin-top: 50px;
             }
 
-            /*button {*/
-            /*background-color: #21AE8A;*/
-            /*color: white;*/
-            /*font-size: 12px;*/
-            /*text-transform: uppercase;*/
-            /*border: none;*/
-            /*width: 80px;*/
-            /*height: 27px;*/
-            /*box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.14);*/
-            /*border-radius: 3px;*/
-            /*font-family: Montserrat;*/
-            /*font-weight: 600;*/
-            /*}*/
-
             button.right {
                 background-color: #21AE8A;
 
@@ -1160,7 +1146,7 @@ if (isset($_POST['action'])) {
                 color: #8C8C8C;
                 font-size: 20px;
                 text-align: center;
-                margin-bottom: 94px;
+                margin-bottom: 50px;
                 cursor: pointer;
             }
 
@@ -1182,9 +1168,9 @@ if (isset($_POST['action'])) {
             }
 
             #steps {
-                width: 70%;
+                width: 64%;
                 margin: auto;
-                padding-bottom: 54px;
+                padding-bottom: 27px;
             }
 
             #first-step {
@@ -1215,7 +1201,7 @@ if (isset($_POST['action'])) {
             .step-image svg {
                 width: 50%;
                 padding-top: 32%;
-                padding-left: 25%;
+                padding-left: 24%;
             }
 
             .active {
@@ -1281,24 +1267,28 @@ if (isset($_POST['action'])) {
 
             ul li {
                 color: #8A9798;
-                font-size: 12px;
-                font-family: "Source Sans Pro", Light;
                 margin-bottom: 8px;
                 display: flex;
+                font-size: 14px;
+            }
+
+            #pointsList span {
+                font-family: 'Source Sans Pro', Light;
             }
 
             li.final {
                 color: #4B8CCA;
-                font-family: Montserrat, Regular;
+                font-family: "Source Sans Pro", Montserrat, Sans-Serif, serif;
                 font-size: 24px;
-                letter-spacing: 2px;
+                letter-spacing: 0.3px;
                 margin-bottom: 9px;
             }
 
             li.migrate {
                 color: #253746;
-                font-family: 'Montserrat', SemiBold;
+                font-family: Montserrat, SemiBold;
                 font-size: 18px;
+                letter-spacing: 0.3px;
                 margin-bottom: 20px;
             }
 
@@ -1339,27 +1329,11 @@ if (isset($_POST['action'])) {
                 box-shadow: none;
             }
 
-            /*#left {*/
-            /*!*float: left;*!*/
-            /*!*width: 60%;*!*/
-            /*margin-top: 28px;*/
-            /*}*/
-
-            /*#right {*/
-            /*overflow: hidden*/
-            /*}*/
-
-
             #sqr {
-                width: 193px;
-                height: 155px;
-                /*border: 2px dashed #4B8CCA;*/
-                /*margin-top: 35px;*/
-                /*background: #F5F8FC;*/
-                background-image: url(images/square.png);
+                width:225px;
+                height:180px;
+                background-image: url(images/square.svg);
                 background-repeat: no-repeat;
-                margin-top: 28px;
-
             }
 
             #triangle_down {
@@ -1389,12 +1363,6 @@ if (isset($_POST['action'])) {
                 padding: 1px 10px;
             }
 
-            /*.rotate {*/
-            /*-moz-transition: all 1s linear;*/
-            /*-webkit-transition: all 1s linear;*/
-            /*transition: all 1s linear;*/
-
-            /*}*/
             .rotate {
                 -moz-transition: all 1.5s ease-out;
                 -webkit-transition: all 1.5s ease-out;
@@ -1425,14 +1393,6 @@ if (isset($_POST['action'])) {
                 margin: 0 auto;
             }
 
-            /*.arrow-down {*/
-            /*width: 0;*/
-            /*height: 0;*/
-            /*border-left: 8px solid transparent;*/
-            /*border-right: 8px solid transparent;*/
-            /*border-top: 8px solid #fff;*/
-            /*margin: 0 auto;*/
-            /*}*/
             .listItems {
                 background-image: url('images/check.svg');
                 background-repeat: no-repeat;
@@ -1451,16 +1411,17 @@ if (isset($_POST['action'])) {
                 color: rgb(75, 140, 202);
                 font-weight: 500;
                 font-size: 10px;
-                margin-left: 22px;
-                margin-top: 9px;
+                margin-left: 23px;
+                margin-top: 29px;
                 font-family: "Source Sans Pro", Regular;
             }
 
             p.messages {
                 text-align: center;
                 color: #253746;
-                margin-top: 10px;
-                font-size: 12px;
+                margin-top: 35px;
+                font-size: 14px;
+                font-family: 'Source Sans Pro', Light;
             }
 
             p.price {
@@ -1475,6 +1436,7 @@ if (isset($_POST['action'])) {
             p.subscribers {
                 text-align: center;
                 margin-top: 14px;
+                margin-bottom: 10px;
                 font-size: 10px;
                 font-family: 'Montserrat', Regular;
             }
@@ -1489,6 +1451,7 @@ if (isset($_POST['action'])) {
                 margin-top: 3px;
                 margin-right: 50px;
                 padding: 20px 15px;
+                width: 498px;
             }
 
             #right {
@@ -1502,8 +1465,10 @@ if (isset($_POST['action'])) {
             }
             p.paidSupport {
                 color: #8A9798;
-                font-size: 13px;
+                font-size: 14px;
                 margin-top: 10px;
+                font-family: 'Source Sans Pro', Light;
+
             }
             a.support {
                 color: #4b8cca;
@@ -1599,7 +1564,7 @@ if (isset($_POST['action'])) {
                     </g>
                 </svg>
 
-                <h1 style="font-family: 'Montserrat', Regular;font-size: 18px;">Updating phpList to the latest
+                <h1 style="font-family: 'Montserrat', Regular;font-size: 18px;cursor:auto;">Updating phpList to the latest
                     version</h1>
             </div>
             <div id="steps">
@@ -1779,13 +1744,12 @@ if (isset($_POST['action'])) {
                 </div>
                 <div id="right">
                     <div id="sqr">
-                        <div class="container">
+                        <div class="container" style="margin-left: 22px;">
                             <p class="greatValue">Great value</p>
                             <br>
                             <p class="messages">9000 messages</p><br>
                             <p class="price">Price $1</p>
                             <p class="subscribers">3000 Subscribers</p>
-                            <br>
                             <input type="button" onclick="window.open('https://phplist.com/chooseplan')" value="Book"
                                    style="width: 90px;height: 30px; border: 1px dashed #21AE8A; background: #fff; margin: 0 auto;"
                                    class="book"/>
@@ -1798,7 +1762,10 @@ if (isset($_POST['action'])) {
     </div><!-- .inner -->
     </div><!-- .outer -->
 
+    <!-- Load jquery-3.3.1.min.js file -->
     <script type="text/javascript" src="../admin/js/jquery-3.3.1.min.js"></script>
+
+    <!-- script for slideToggle -->
     <script type="text/javascript">
         $('.outer button').on("click", function () {
             $('.inner').slideToggle(1000, function () {
@@ -1806,6 +1773,7 @@ if (isset($_POST['action'])) {
             });
         });
     </script>
+    <!-- Arrow transition -->
     <script type="text/javascript">
         $(".rotate").click(function () {
             $(this).toggleClass("down");
