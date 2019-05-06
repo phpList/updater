@@ -1043,7 +1043,6 @@ if (isset($_POST['action'])) {
 
             button.right {
                 background-color: #21AE8A;
-
                 color: white;
                 border-radius: 5px;
                 height: 40px;
@@ -1053,6 +1052,8 @@ if (isset($_POST['action'])) {
                 text-transform: uppercase;
                 margin-top: 20px;
                 border: none;
+                font-family: "Montserrat", SemiBold;
+                font-weight:600;
             }
 
             button:disabled {
@@ -1278,7 +1279,7 @@ if (isset($_POST['action'])) {
 
             li.final {
                 color: #4B8CCA;
-                font-family: "Source Sans Pro", Montserrat, Sans-Serif, serif;
+                font-family: Montserrat, Sans-Serif;
                 font-size: 24px;
                 letter-spacing: 0.3px;
                 margin-bottom: 9px;
@@ -1355,6 +1356,7 @@ if (isset($_POST['action'])) {
                 font-size: 12px;
                 font-weight: 600;
                 cursor: pointer;
+                font-family: "Montserrat", SemiBold;
             }
 
             #database-upgrade.right {
@@ -1437,8 +1439,8 @@ if (isset($_POST['action'])) {
                 text-align: center;
                 margin-top: 14px;
                 margin-bottom: 10px;
-                font-size: 10px;
-                font-family: 'Montserrat', Regular;
+                font-size: 12px;
+                font-family: 'Source Sans Pro', Regular;
             }
 
             #wrap {
@@ -1466,13 +1468,17 @@ if (isset($_POST['action'])) {
             p.paidSupport {
                 color: #8A9798;
                 font-size: 14px;
-                margin-top: 10px;
+                margin-top: 14px;
                 font-family: 'Source Sans Pro', Light;
 
             }
             a.support {
                 color: #4b8cca;
                 text-decoration: none;
+            }
+            svg.performUpdate {
+                padding-top: 39%;
+                padding-left: 28%;
             }
 
         </style>
@@ -1659,7 +1665,7 @@ if (isset($_POST['action'])) {
                 <div class="step last-step">
                     <div class="step-image">
                         <svg xmlns="http://www.w3.org/2000/svg" width="22.512" height="16.01"
-                             viewBox="0 0 22.512 16.01">
+                             viewBox="0 0 22.512 16.01" class="performUpdate">
                             <path id="Path_219" data-name="Path 219"
                                   d="M16100.607-997.888c-2.889,2.889-14.332,14.2-14.332,14.2l-6.68-6.679"
                                   transform="translate(-16078.847 998.638)" fill="none" stroke="#253746"
