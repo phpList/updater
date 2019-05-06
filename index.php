@@ -13,10 +13,8 @@ class updater
 {
     /** @var bool */
     private $availableUpdate = false;
-
     const DOWNLOAD_PATH = '../tmp_uploaded_update';
     const ELIGIBLE_SESSION_KEY = 'phplist_updater_eligible';
-
     private $excludedFiles = array(
         'dl.php',
         'index.php',
@@ -278,19 +276,26 @@ class updater
     }
 
     /**
+     * Get config file path
+     * @return string
+     */
+    function getConfigFilePath()
+    {
+        return  __DIR__ . '/../config/config.php';
+    }
+
+    /**
      * Get a PDO connection
      * @return PDO
      * @throws UpdateException
      */
     function getConnection()
     {
-        $standardConfig = __DIR__ . '/../config/config.php';
-
         if (isset($_SERVER['ConfigFile']) && is_file($_SERVER['ConfigFile'])) {
             include $_SERVER['ConfigFile'];
 
-        } elseif (file_exists($standardConfig)) {
-            include $standardConfig;
+        } elseif (file_exists($this->getConfigFilePath())) {
+            include $this->getConfigFilePath();
         } else {
             throw new \UpdateException("Error: Cannot find config file");
         }
@@ -324,11 +329,10 @@ class updater
      */
     function addMaintenanceMode()
     {
-        $standardConfig = __DIR__ . '/../config/config.php';
         if (isset($_SERVER['ConfigFile']) && is_file($_SERVER['ConfigFile'])) {
             include $_SERVER['ConfigFile'];
-        } elseif (file_exists($standardConfig)) {
-            include $standardConfig;
+        } elseif (file_exists($this->getConfigFilePath())) {
+            include $this->getConfigFilePath();
         } else {
             throw new \UpdateException("Error: Cannot find config file");
         }
@@ -366,11 +370,10 @@ class updater
      */
     function removeMaintenanceMode()
     {
-        $standardConfig = __DIR__ . '/../config/config.php';
         if (isset($_SERVER['ConfigFile']) && is_file($_SERVER['ConfigFile'])) {
             include $_SERVER['ConfigFile'];
-        } elseif (file_exists($standardConfig)) {
-            include $standardConfig;
+        } elseif (file_exists($this->getConfigFilePath())) {
+            include $this->getConfigFilePath();
         } else {
             throw new \UpdateException("Error: Cannot find config file");
         }
