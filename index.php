@@ -1310,12 +1310,17 @@ if (isset($_POST['action'])) {
                 margin-bottom: 9px;
             }
 
-            li.migrate {
+            li.migrate, li.migrate a {
                 color: #253746;
                 font-family: Montserrat, SemiBold;
                 font-size: 18px;
                 letter-spacing: 0.3px;
                 margin-bottom: 20px;
+                text-decoration: none;
+            }
+
+            li.migrate a:hover {
+                text-decoration: underline;
             }
 
             #success-message {
@@ -1729,7 +1734,7 @@ if (isset($_POST['action'])) {
                 <div id="left">
                     <ul>
                         <li class="final">The Final Upgrade?</li>
-                        <li class="migrate">Migrate to phpList.com and forget about the tech</li>
+                        <li class="migrate"><a href="https://www.phplist.com/poweredby?utm_source=self-hosted-updater" target="_blank">Migrate to phpList.com and forget about the tech</a></li>
                     </ul>
                     <ul style="float:left;margin-right: 18px;">
                         <li>
@@ -1781,7 +1786,8 @@ if (isset($_POST['action'])) {
                             <p class="messages">9000 messages</p><br>
                             <p class="price">Price $1</p>
                             <p class="subscribers">3000 Subscribers</p>
-                            <input type="button" onclick="window.open('https://phplist.com/chooseplan')" value="Book"
+                            <br>
+                            <input type="button" onclick="window.open('https://www.phplist.com/register?utm_source=self-hosted-updater')" value="Book"
                                    style="width: 90px;height: 30px; border: 1px dashed #21AE8A; background: #fff; margin: 0 auto;"
                                    class="book"/>
                         </div>
