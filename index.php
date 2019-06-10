@@ -13,11 +13,8 @@ class updater
 {
     /** @var bool */
     private $availableUpdate = false;
-
     const DOWNLOAD_PATH = '../tmp_uploaded_update';
     const ELIGIBLE_SESSION_KEY = 'phplist_updater_eligible';
-    const CONFIG_FILE = __DIR__ . '/../config/config.php';
-
     private $excludedFiles = array(
         'dl.php',
         'index.php',
@@ -279,19 +276,26 @@ class updater
     }
 
     /**
+     * Get config file path
+     * @return string
+     */
+    function getConfigFilePath()
+    {
+        return  __DIR__ . '/../config/config.php';
+    }
+
+    /**
      * Get a PDO connection
      * @return PDO
      * @throws UpdateException
      */
     function getConnection()
     {
-        $standardConfig = self::CONFIG_FILE;
-
         if (isset($_SERVER['ConfigFile']) && is_file($_SERVER['ConfigFile'])) {
             include $_SERVER['ConfigFile'];
 
-        } elseif (file_exists($standardConfig)) {
-            include $standardConfig;
+        } elseif (file_exists($this->getConfigFilePath())) {
+            include $this->getConfigFilePath();
         } else {
             throw new \UpdateException("Error: Cannot find config file");
         }
@@ -325,11 +329,10 @@ class updater
      */
     function addMaintenanceMode()
     {
-        $standardConfig = self::CONFIG_FILE;
         if (isset($_SERVER['ConfigFile']) && is_file($_SERVER['ConfigFile'])) {
             include $_SERVER['ConfigFile'];
-        } elseif (file_exists($standardConfig)) {
-            include $standardConfig;
+        } elseif (file_exists($this->getConfigFilePath())) {
+            include $this->getConfigFilePath();
         } else {
             throw new \UpdateException("Error: Cannot find config file");
         }
@@ -367,11 +370,10 @@ class updater
      */
     function removeMaintenanceMode()
     {
-        $standardConfig = self::CONFIG_FILE;
         if (isset($_SERVER['ConfigFile']) && is_file($_SERVER['ConfigFile'])) {
             include $_SERVER['ConfigFile'];
-        } elseif (file_exists($standardConfig)) {
-            include $standardConfig;
+        } elseif (file_exists($this->getConfigFilePath())) {
+            include $this->getConfigFilePath();
         } else {
             throw new \UpdateException("Error: Cannot find config file");
         }
@@ -422,6 +424,22 @@ class updater
         // extract files
         $this->unZipFiles($zipFile, self::DOWNLOAD_PATH);
 
+    }
+
+    /**
+     * Check the downloaded phpList version. Return false if it's a downgrade.
+     * @throws UpdateException
+     * @return bool
+     */
+    function checkForDowngrade()
+    {
+        $downloadedVersion = file_get_contents(self::DOWNLOAD_PATH.'/phplist/public_html/lists/admin/init.php');
+        preg_match_all('/define\(\"VERSION\",\"(.*)\"\);/', $downloadedVersion, $matches);
+
+        if (isset($matches[1][0]) && version_compare($this->getCurrentVersion(), $matches[1][0])) {
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -871,6 +889,13 @@ if (isset($_POST['action'])) {
             }
             break;
         case 10:
+            if ($update -> checkForDowngrade()) {
+                echo (json_encode(array('continue' => true, 'autocontinue' => true, 'response' => 'Not a downgrade!')));
+            } else {
+                echo(json_encode(array('continue' => false, 'response' => 'Downgrade is not supported.')));
+            }
+            break;
+        case 11:
             $on = $update->addMaintenanceMode();
             if ($on === false) {
                 echo(json_encode(array('continue' => false, 'response' => 'Cannot set the maintenance mode on!')));
@@ -878,7 +903,7 @@ if (isset($_POST['action'])) {
                 echo(json_encode(array('continue' => true, 'response' => 'Set maintenance mode on', 'autocontinue' => true)));
             }
             break;
-        case 11:
+        case 12:
             try {
                 $update->replacePHPEntryPoints();
                 echo(json_encode(array('continue' => true, 'response' => 'Replaced entry points', 'autocontinue' => true)));
@@ -886,7 +911,7 @@ if (isset($_POST['action'])) {
                 echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
             }
             break;
-        case 12:
+        case 13:
             try {
                 $update->movePluginsInTempFolder();
                 echo(json_encode(array('continue' => true, 'response' => 'Backing up the plugins', 'autocontinue' => true)));
@@ -894,7 +919,7 @@ if (isset($_POST['action'])) {
                 echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
             }
             break;
-        case 13:
+        case 14:
             try {
                 $update->deleteFiles();
                 echo(json_encode(array('continue' => true, 'response' => 'Old files have been deleted!', 'autocontinue' => true)));
@@ -902,7 +927,7 @@ if (isset($_POST['action'])) {
                 echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
             }
             break;
-        case 14:
+        case 15:
             try {
                 $update->moveNewFiles();
                 echo(json_encode(array('continue' => true, 'response' => 'Moved new files in place!', 'autocontinue' => true)));
@@ -911,7 +936,7 @@ if (isset($_POST['action'])) {
                 echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
             }
             break;
-        case 15:
+        case 16:
             try {
                 $update->movePluginsInPlace();
                 echo(json_encode(array('continue' => true, 'response' => 'Moved plugins in place!', 'autocontinue' => true)));
@@ -919,7 +944,7 @@ if (isset($_POST['action'])) {
                 echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
             }
             break;
-        case 16:
+        case 17:
             try {
                 $update->moveEntryPHPpoints();
                 echo(json_encode(array('continue' => true, 'response' => 'Moved new entry points in place!', 'autocontinue' => true)));
@@ -927,7 +952,7 @@ if (isset($_POST['action'])) {
                 echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
             }
             break;
-        case 17:
+        case 18:
             try {
                 $update->moveUpdater();
                 echo(json_encode(array('continue' => true, 'response' => 'Moved new entry points in place!', 'autocontinue' => true)));
@@ -935,7 +960,7 @@ if (isset($_POST['action'])) {
                 echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
             }
             break;
-        case 18:
+        case 19:
             try {
                 $update->deleteTemporaryFiles();
                 echo(json_encode(array('continue' => true, 'response' => 'Deleted temporary files!', 'autocontinue' => true)));
@@ -943,7 +968,7 @@ if (isset($_POST['action'])) {
                 echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
             }
             break;
-        case 19:
+        case 20:
             try {
                 $update->removeMaintenanceMode();
                 echo(json_encode(array('continue' => true, 'response' => 'Removed maintenance mode', 'autocontinue' => true)));
@@ -951,7 +976,7 @@ if (isset($_POST['action'])) {
                 echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
             }
             break;
-        case 20:
+        case 21:
             $writeStep = false;
             try {
                 $update->replaceNewUpdater();
@@ -1552,7 +1577,7 @@ if (isset($_POST['action'])) {
                     </g>
                 </svg>
 
-                <h1 style="font-family: 'Montserrat', Regular;font-size: 18px;">Updating phpList to the latest
+                <h1 style="font-family: 'Montserrat', Regular;font-size: 18px;cursor:auto;">Updating phpList to the latest
                     version</h1>
             </div>
             <div id="steps">
@@ -1647,7 +1672,7 @@ if (isset($_POST['action'])) {
                 <div class="step last-step">
                     <div class="step-image">
                         <svg xmlns="http://www.w3.org/2000/svg" width="22.512" height="16.01"
-                             viewBox="0 0 22.512 16.01">
+                             viewBox="0 0 22.512 16.01" class="performUpdate">
                             <path id="Path_219" data-name="Path 219"
                                   d="M16100.607-997.888c-2.889,2.889-14.332,14.2-14.332,14.2l-6.68-6.679"
                                   transform="translate(-16078.847 998.638)" fill="none" stroke="#253746"
@@ -1737,7 +1762,7 @@ if (isset($_POST['action'])) {
                             <p class="messages">9000 messages</p><br>
                             <p class="price">Price $1</p>
                             <p class="subscribers">3000 Subscribers</p>
-                            <input type="button" onclick="window.open('https://www.phplist.com/register?utm_source=self-hosted-updater')" value="Book"
+                            <input type="button" onclick="window.open('https://phplist.com/chooseplan')" value="Book"
                                    style="width: 90px;height: 30px; border: 1px dashed #21AE8A; background: #fff; margin: 0 auto;"
                                    class="book"/>
                         </div>
@@ -1749,6 +1774,7 @@ if (isset($_POST['action'])) {
     </div><!-- .inner -->
     </div><!-- .outer -->
 
+    <!-- Load jquery-3.3.1.min.js file -->
     <script type="text/javascript" src="../admin/js/jquery-3.3.1.min.js"></script>
 
     <!-- script for arrow animation -->
@@ -1768,6 +1794,7 @@ if (isset($_POST['action'])) {
             rotated = !rotated;
         }
     </script>
+
     <!-- script for slideToggle -->
     <script type="text/javascript">
         $('.outer button').on("click", function () {
@@ -1776,6 +1803,7 @@ if (isset($_POST['action'])) {
             });
         });
     </script>
+    <!-- Arrow transition -->
     <script type="text/javascript">
         $("#center").addClass("cutomMinHeight");
         $(".fixed").addClass("cutomMinHeight");
@@ -1833,7 +1861,7 @@ if (isset($_POST['action'])) {
                 7: 1,
                 8: 2,
                 9: 2,
-                10: 3,
+                10: 2,
                 11: 3,
                 12: 3,
                 13: 3,
@@ -1844,6 +1872,7 @@ if (isset($_POST['action'])) {
                 18: 3,
                 19: 3,
                 20: 3,
+                21: 3,
             };
 
             let steps = document.querySelectorAll('.step-image');
