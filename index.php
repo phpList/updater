@@ -1041,23 +1041,8 @@ if (isset($_POST['action'])) {
                 margin-top: 50px;
             }
 
-            /*button {*/
-            /*background-color: #21AE8A;*/
-            /*color: white;*/
-            /*font-size: 12px;*/
-            /*text-transform: uppercase;*/
-            /*border: none;*/
-            /*width: 80px;*/
-            /*height: 27px;*/
-            /*box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.14);*/
-            /*border-radius: 3px;*/
-            /*font-family: Montserrat;*/
-            /*font-weight: 600;*/
-            /*}*/
-
             button.right {
                 background-color: #21AE8A;
-
                 color: white;
                 border-radius: 5px;
                 height: 40px;
@@ -1067,6 +1052,8 @@ if (isset($_POST['action'])) {
                 text-transform: uppercase;
                 margin-top: 20px;
                 border: none;
+                font-family: "Montserrat", SemiBold;
+                font-weight:600;
             }
 
             button:disabled {
@@ -1160,7 +1147,7 @@ if (isset($_POST['action'])) {
                 color: #8C8C8C;
                 font-size: 20px;
                 text-align: center;
-                margin-bottom: 94px;
+                margin-bottom: 50px;
                 cursor: pointer;
             }
 
@@ -1182,9 +1169,9 @@ if (isset($_POST['action'])) {
             }
 
             #steps {
-                width: 70%;
+                width: 64%;
                 margin: auto;
-                padding-bottom: 54px;
+                padding-bottom: 27px;
             }
 
             #first-step {
@@ -1215,7 +1202,7 @@ if (isset($_POST['action'])) {
             .step-image svg {
                 width: 50%;
                 padding-top: 32%;
-                padding-left: 25%;
+                padding-left: 24%;
             }
 
             .active {
@@ -1281,25 +1268,30 @@ if (isset($_POST['action'])) {
 
             ul li {
                 color: #8A9798;
-                font-size: 12px;
-                font-family: "Source Sans Pro", Light;
                 margin-bottom: 8px;
                 display: flex;
+                font-size: 14px;
+            }
+
+            #pointsList span {
+                font-family: 'Source Sans Pro', Light;
             }
 
             li.final {
                 color: #4B8CCA;
-                font-family: Montserrat, Regular;
+                font-family: Montserrat, Sans-Serif;
                 font-size: 24px;
-                letter-spacing: 2px;
+                letter-spacing: 0.3px;
                 margin-bottom: 9px;
             }
 
-            li.migrate {
+            li.migrate a {
                 color: #253746;
-                font-family: 'Montserrat', SemiBold;
+                font-family: Montserrat, SemiBold;
                 font-size: 18px;
+                letter-spacing: 0.3px;
                 margin-bottom: 20px;
+                text-decoration: none;
             }
 
             #success-message {
@@ -1339,27 +1331,11 @@ if (isset($_POST['action'])) {
                 box-shadow: none;
             }
 
-            /*#left {*/
-            /*!*float: left;*!*/
-            /*!*width: 60%;*!*/
-            /*margin-top: 28px;*/
-            /*}*/
-
-            /*#right {*/
-            /*overflow: hidden*/
-            /*}*/
-
-
             #sqr {
-                width: 193px;
-                height: 155px;
-                /*border: 2px dashed #4B8CCA;*/
-                /*margin-top: 35px;*/
-                /*background: #F5F8FC;*/
-                background-image: url(images/square.png);
+                width:225px;
+                height:180px;
+                background-image: url(images/square.svg);
                 background-repeat: no-repeat;
-                margin-top: 28px;
-
             }
 
             #triangle_down {
@@ -1381,6 +1357,7 @@ if (isset($_POST['action'])) {
                 font-size: 12px;
                 font-weight: 600;
                 cursor: pointer;
+                font-family: "Montserrat", SemiBold;
             }
 
             #database-upgrade.right {
@@ -1389,50 +1366,6 @@ if (isset($_POST['action'])) {
                 padding: 1px 10px;
             }
 
-            /*.rotate {*/
-            /*-moz-transition: all 1s linear;*/
-            /*-webkit-transition: all 1s linear;*/
-            /*transition: all 1s linear;*/
-
-            /*}*/
-            .rotate {
-                -moz-transition: all 1.5s ease-out;
-                -webkit-transition: all 1.5s ease-out;
-                transition: all 1.5s ease-out;
-
-            }
-
-            .rotate.down {
-                -moz-transform: rotate(180deg);
-                -webkit-transform: rotate(180deg);
-                transform: rotate(180deg);
-                transition: all 1.5s ease-out;
-            }
-
-            .arrow-up {
-                width: 21px;
-                height: 12px;
-                background-image: url(images/arrow_up.png);
-                background-repeat: no-repeat;
-                margin: 0 auto;
-            }
-
-            .arrow-down {
-                width: 21px;
-                height: 12px;
-                background-image: url(images/arrow_down.png);
-                background-repeat: no-repeat;
-                margin: 0 auto;
-            }
-
-            /*.arrow-down {*/
-            /*width: 0;*/
-            /*height: 0;*/
-            /*border-left: 8px solid transparent;*/
-            /*border-right: 8px solid transparent;*/
-            /*border-top: 8px solid #fff;*/
-            /*margin: 0 auto;*/
-            /*}*/
             .listItems {
                 background-image: url('images/check.svg');
                 background-repeat: no-repeat;
@@ -1451,16 +1384,17 @@ if (isset($_POST['action'])) {
                 color: rgb(75, 140, 202);
                 font-weight: 500;
                 font-size: 10px;
-                margin-left: 22px;
-                margin-top: 9px;
+                margin-left: 23px;
+                margin-top: 29px;
                 font-family: "Source Sans Pro", Regular;
             }
 
             p.messages {
                 text-align: center;
                 color: #253746;
-                margin-top: 10px;
-                font-size: 12px;
+                margin-top: 35px;
+                font-size: 14px;
+                font-family: 'Source Sans Pro', Light;
             }
 
             p.price {
@@ -1475,8 +1409,9 @@ if (isset($_POST['action'])) {
             p.subscribers {
                 text-align: center;
                 margin-top: 14px;
-                font-size: 10px;
-                font-family: 'Montserrat', Regular;
+                margin-bottom: 10px;
+                font-size: 12px;
+                font-family: 'Source Sans Pro', Regular;
             }
 
             #wrap {
@@ -1489,6 +1424,7 @@ if (isset($_POST['action'])) {
                 margin-top: 3px;
                 margin-right: 50px;
                 padding: 20px 15px;
+                width: 498px;
             }
 
             #right {
@@ -1502,14 +1438,31 @@ if (isset($_POST['action'])) {
             }
             p.paidSupport {
                 color: #8A9798;
-                font-size: 13px;
-                margin-top: 10px;
+                font-size: 14px;
+                margin-top: 14px;
+                font-family: 'Source Sans Pro', Light;
+
             }
             a.support {
                 color: #4b8cca;
                 text-decoration: none;
             }
+            svg.performUpdate {
+                padding-top: 39%;
+                padding-left: 28%;
+            }
 
+            #arrowdown {
+                width: 21px;
+                height: 12px;
+                background-image: url(images/arrow_down.png);
+                background-repeat: no-repeat;
+                margin: 0 auto;
+                -moz-transition: all 1.5s ease-out;
+                -webkit-transition: all 1.5s ease-out;
+                -o-transition: all 1.5s ease-out;
+                transition: all 1.5s ease-out;
+            }
         </style>
     </head>
     <body>
@@ -1724,10 +1677,9 @@ if (isset($_POST['action'])) {
 
     <!-- Info updater section -->
     <div class="outer">
-        <button class="info-footer">
-            <div class="arrow-down rotate"></div>
+        <button class="info-footer" id="button">
+            <div id="arrowdown"></div>
         </button>
-
         <div class="inner">
             <div id="wrap">
                 <div id="left">
@@ -1779,14 +1731,13 @@ if (isset($_POST['action'])) {
                 </div>
                 <div id="right">
                     <div id="sqr">
-                        <div class="container">
+                        <div class="container" style="margin-left: 22px;">
                             <p class="greatValue">Great value</p>
                             <br>
                             <p class="messages">9000 messages</p><br>
                             <p class="price">Price $1</p>
                             <p class="subscribers">3000 Subscribers</p>
-                            <br>
-                            <input type="button" onclick="window.open('https://phplist.com/chooseplan')" value="Book"
+                            <input type="button" onclick="window.open('https://www.phplist.com/register?utm_source=self-hosted-updater')" value="Book"
                                    style="width: 90px;height: 30px; border: 1px dashed #21AE8A; background: #fff; margin: 0 auto;"
                                    class="book"/>
                         </div>
@@ -1799,17 +1750,31 @@ if (isset($_POST['action'])) {
     </div><!-- .outer -->
 
     <script type="text/javascript" src="../admin/js/jquery-3.3.1.min.js"></script>
+
+    <!-- script for arrow animation -->
+    <script type="text/javascript">
+        var rotated = false;
+
+        document.getElementById('button').onclick = function() {
+            var div = document.getElementById('arrowdown'),
+                deg = rotated ? 0 : 180;
+
+            div.style.webkitTransform = 'rotate('+deg+'deg)';
+            div.style.mozTransform    = 'rotate('+deg+'deg)';
+            div.style.msTransform     = 'rotate('+deg+'deg)';
+            div.style.oTransform      = 'rotate('+deg+'deg)';
+            div.style.transform       = 'preserve-3d('+deg+'deg)';
+
+            rotated = !rotated;
+        }
+    </script>
+    <!-- script for slideToggle -->
     <script type="text/javascript">
         $('.outer button').on("click", function () {
             $('.inner').slideToggle(1000, function () {
                 $('.inner p').show(100);
             });
         });
-    </script>
-    <script type="text/javascript">
-        $(".rotate").click(function () {
-            $(this).toggleClass("down");
-        })
     </script>
     <script type="text/javascript">
         $("#center").addClass("cutomMinHeight");
