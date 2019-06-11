@@ -1310,12 +1310,13 @@ if (isset($_POST['action'])) {
                 margin-bottom: 9px;
             }
 
-            li.migrate {
+            li.migrate a {
                 color: #253746;
                 font-family: Montserrat, SemiBold;
                 font-size: 18px;
                 letter-spacing: 0.3px;
                 margin-bottom: 20px;
+                text-decoration: none;
             }
 
             #success-message {
@@ -1388,36 +1389,6 @@ if (isset($_POST['action'])) {
                 margin-top: 40px;
                 font-size: 12px;
                 padding: 1px 10px;
-            }
-
-            .rotate {
-                -moz-transition: all 1.5s ease-out;
-                -webkit-transition: all 1.5s ease-out;
-                transition: all 1.5s ease-out;
-
-            }
-
-            .rotate.down {
-                -moz-transform: rotate(180deg);
-                -webkit-transform: rotate(180deg);
-                transform: rotate(180deg);
-                transition: all 1.5s ease-out;
-            }
-
-            .arrow-up {
-                width: 21px;
-                height: 12px;
-                background-image: url(images/arrow_up.png);
-                background-repeat: no-repeat;
-                margin: 0 auto;
-            }
-
-            .arrow-down {
-                width: 21px;
-                height: 12px;
-                background-image: url(images/arrow_down.png);
-                background-repeat: no-repeat;
-                margin: 0 auto;
             }
 
             .listItems {
@@ -1506,6 +1477,17 @@ if (isset($_POST['action'])) {
                 padding-left: 28%;
             }
 
+            #arrowdown {
+                width: 21px;
+                height: 12px;
+                background-image: url(images/arrow_down.png);
+                background-repeat: no-repeat;
+                margin: 0 auto;
+                -moz-transition: all 1.5s ease-out;
+                -webkit-transition: all 1.5s ease-out;
+                -o-transition: all 1.5s ease-out;
+                transition: all 1.5s ease-out;
+            }
         </style>
     </head>
     <body>
@@ -1720,10 +1702,9 @@ if (isset($_POST['action'])) {
 
     <!-- Info updater section -->
     <div class="outer">
-        <button class="info-footer">
-            <div class="arrow-down rotate"></div>
+        <button class="info-footer" id="button">
+            <div id="arrowdown"></div>
         </button>
-
         <div class="inner">
             <div id="wrap">
                 <div id="left">
@@ -1796,6 +1777,24 @@ if (isset($_POST['action'])) {
     <!-- Load jquery-3.3.1.min.js file -->
     <script type="text/javascript" src="../admin/js/jquery-3.3.1.min.js"></script>
 
+    <!-- script for arrow animation -->
+    <script type="text/javascript">
+        var rotated = false;
+
+        document.getElementById('button').onclick = function() {
+            var div = document.getElementById('arrowdown'),
+                deg = rotated ? 0 : 180;
+
+            div.style.webkitTransform = 'rotate('+deg+'deg)';
+            div.style.mozTransform    = 'rotate('+deg+'deg)';
+            div.style.msTransform     = 'rotate('+deg+'deg)';
+            div.style.oTransform      = 'rotate('+deg+'deg)';
+            div.style.transform       = 'preserve-3d('+deg+'deg)';
+
+            rotated = !rotated;
+        }
+    </script>
+
     <!-- script for slideToggle -->
     <script type="text/javascript">
         $('.outer button').on("click", function () {
@@ -1805,11 +1804,6 @@ if (isset($_POST['action'])) {
         });
     </script>
     <!-- Arrow transition -->
-    <script type="text/javascript">
-        $(".rotate").click(function () {
-            $(this).toggleClass("down");
-        })
-    </script>
     <script type="text/javascript">
         $("#center").addClass("cutomMinHeight");
         $(".fixed").addClass("cutomMinHeight");
