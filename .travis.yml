@@ -62,7 +62,7 @@ install:
   - mv updater phplist
   - mv phplist/tmp/public_html phplist
   - cd phplist/tmp
-  - mv bin/ /home/travis/build/suelaP/phplist/
+  - mv bin/ /home/travis/build/phpList/phplist/
   - cd ..
   - rm -r tmp/
   - cd public_html/lists/
@@ -83,7 +83,7 @@ before_script:
   - mkdir -p build/mails
   - cd build/mails
   - smtp-sink -d "%d.%H.%M.%S" localhost:2500 1000 &
-  - cd /home/travis/build/suelaP/phplist
+  - cd /home/travis/build/phpList/phplist
   
   # start selenium and php server
   - "sh -e /etc/init.d/xvfb start"
