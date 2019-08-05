@@ -1689,7 +1689,7 @@ if (isset($_POST['action'])) {
 
             <div id="display">
                 <span id="current-step" class="hidden"> </span>
-                <span id="success-message">Updater is loading.</span><br/>
+                <span id="success-message">Updater is loading</span><br/>
                 <span id="error-message"></span><br>
                 <div>
                     <button id="next-step" class="right">Next</button>
