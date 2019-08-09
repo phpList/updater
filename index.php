@@ -820,7 +820,7 @@ if (isset($_POST['action'])) {
         case 3:
             $unexpectedFiles = $update->checkRequiredFiles();
             if (count($unexpectedFiles) !== 0) {
-                $elements = "Error: The following files are either not expected or are required. To continue please move or delete them. \n";;
+                $elements = "Error: The following files are either not expected and should be removed, or are missing but required and should be put back in place \n";
                 foreach ($unexpectedFiles as $key => $fileName) {
                     $elements .= $key . "\n";
                 }
