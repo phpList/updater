@@ -222,11 +222,15 @@ class updater
         foreach ($files as $fileinfo) {
             if ($fileinfo->isDir()) {
                 if (false === rmdir($fileinfo->getRealPath())) {
-                    throw new \UpdateException("Could not delete $fileinfo");
+                    if (false === unlink($fileinfo)) {
+                        throw new \UpdateException("Could not delete $fileinfo");
+                    }
                 }
             } else {
                 if (false === unlink($fileinfo->getRealPath())) {
-                    throw new \UpdateException("Could not delete $fileinfo");
+                    if (false === unlink($fileinfo)) {
+                        throw new \UpdateException("Could not delete $fileinfo");
+                    }
                 }
             }
         }
