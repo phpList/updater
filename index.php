@@ -148,7 +148,9 @@ class updater
         $files = array();
         foreach ($iterator as $info) {
             if (!is_writable($info->getRealPath())) {
-                $files[] = $info->getRealPath();
+                if (!empty($info->getRealPath())) {
+                    $files[] = $info->getRealPath();
+                }
             }
         }
 
