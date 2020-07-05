@@ -26,7 +26,11 @@ class updater
 
     public function isAuthenticated()
     {
-        session_start();
+
+        ini_set('session.name','phpListSession');
+        ini_set('session.cookie_samesite','Strict');
+        ini_set('session.use_only_cookies',1);
+        ini_set('session.cookie_httponly',1);        session_start();
         if (isset($_SESSION[self::ELIGIBLE_SESSION_KEY]) && $_SESSION[self::ELIGIBLE_SESSION_KEY] === true) {
             return true;
         }
