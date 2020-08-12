@@ -737,17 +737,24 @@ class updater
     }
 
     /**
-     * Move plugins back in admin directory.
+     * Move any additional plugin files and directories back to the admin directory.
      * @throws UpdateException
      */
     function movePluginsInPlace()
     {
         $oldDir = realpath(__DIR__ . '/../tmp_uploaded_update/tempplugins');
         $newDir = realpath(__DIR__ . '/../admin/plugins');
-        $this->rmdir_recursive($newDir);
-        $state = rename($oldDir, $newDir);
-        if ($state === false) {
-            throw new UpdateException("Could not move plugins directory to admin folder.");
+
+        $existingPluginFiles = scandir($oldDir);
+        $newPluginFiles = scandir($newDir);
+        $additional = array_diff($existingPluginFiles, $newPluginFiles);
+
+        foreach ($additional as $file) {
+            $state = rename("$oldDir/$file", "$newDir/$file");
+
+            if ($state === false) {
+                throw new UpdateException("Could not restore plugin $file.");
+            }
         }
     }
 
