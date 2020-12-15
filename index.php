@@ -151,15 +151,12 @@ class updater
         $iterator = new \RecursiveIteratorIterator($directory, RecursiveIteratorIterator::CHILD_FIRST);
         $files = array();
         foreach ($iterator as $info) {
-            if (!is_writable($info->getRealPath())) {
-                if (!empty($info->getRealPath())) {
-                    $files[] = $info->getRealPath();
-                }
+            $path = $info->getRealPath();
+            if (!is_writable($path) && !empty($path)) {
+                $files[] = $path;
             }
         }
-
         return $files;
-
     }
 
     /**
