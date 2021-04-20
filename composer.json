@@ -8,7 +8,7 @@
     "manager"
   ],
   "homepage": "https://www.phpList.org/",
-  "type": "project",
+  "type": "library",
   "license": "GNU Affero General Public License version 3.0 or later (AGPLv3+)",
   "support": {
     "issues": "https://github.com/phpList/phpList3/issues",
