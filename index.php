@@ -351,8 +351,7 @@ class updater
             $this->getConnection()
                 ->prepare("INSERT INTO {$table_name}(`item`,`editable`,`value`) VALUES (?,0,?)")
                 ->execute(array('update_in_progress', 1));
-        }
-        if ($result['update_in_progress'] == 0) {
+        } elseif ($result['value'] == 0) {
             $this->getConnection()
                 ->prepare("UPDATE {$table_name} SET `value`=? WHERE `item`=?")
                 ->execute(array(1, 'update_in_progress'));
