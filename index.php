@@ -23,6 +23,28 @@ class updater
         'ut.php',
         'api.php',
     );
+    private $database_host;
+    private $database_name;
+    private $database_user;
+    private $database_password;
+    private $table_prefix;
+
+    public function __construct()
+    {
+        if (isset($_SERVER['ConfigFile']) && is_file($_SERVER['ConfigFile'])) {
+            include $_SERVER['ConfigFile'];
+        } elseif (file_exists($f = $this->getConfigFilePath())) {
+            include $f;
+        } else {
+            throw new \UpdateException("Error: Cannot find config file");
+        }
+
+        $this->database_host = $database_host;
+        $this->database_name = $database_name;
+        $this->database_user = $database_user;
+        $this->database_password = $database_password;
+        $this->table_prefix = isset($table_prefix) ? $table_prefix : 'phplist_';
+    }
 
     public function isAuthenticated()
     {
@@ -298,31 +320,15 @@ class updater
      */
     function getConnection()
     {
-        if (isset($_SERVER['ConfigFile']) && is_file($_SERVER['ConfigFile'])) {
-            include $_SERVER['ConfigFile'];
-
-        } elseif (file_exists($this->getConfigFilePath())) {
-            include $this->getConfigFilePath();
-        } else {
-            throw new \UpdateException("Error: Cannot find config file");
-        }
-
         $charset = 'utf8mb4';
-
-        /** @var string $database_host
-         * @var string $database_name
-         * @var string $database_user
-         * @var string $database_password
-         */
-
-        $dsn = "mysql:host=$database_host;dbname=$database_name;charset=$charset";
+        $dsn = "mysql:host=$this->database_host;dbname=$this->database_name;charset=$charset";
         $options = array(
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
             PDO::ATTR_EMULATE_PREPARES => false,
         );
         try {
-            $pdo = new PDO($dsn, $database_user, $database_password, $options);
+            $pdo = new PDO($dsn, $this->database_user, $this->database_password, $options);
         } catch (\PDOException $e) {
             throw new \PDOException($e->getMessage(), (int)$e->getCode());
         }
@@ -336,18 +342,7 @@ class updater
      */
     function addMaintenanceMode()
     {
-        if (isset($_SERVER['ConfigFile']) && is_file($_SERVER['ConfigFile'])) {
-            include $_SERVER['ConfigFile'];
-        } elseif (file_exists($this->getConfigFilePath())) {
-            include $this->getConfigFilePath();
-        } else {
-            throw new \UpdateException("Error: Cannot find config file");
-        }
-        if (isset($table_prefix)) {
-            $table_name = $table_prefix . 'config';
-        } else {
-            $table_name = 'phplist_config';
-        }
+        $table_name = $this->table_prefix . 'config';
         $prepStmt = $this->getConnection()->prepare("SELECT * FROM {$table_name} WHERE item=?");
         $prepStmt->execute(array('update_in_progress'));
         $result = $prepStmt->fetch(PDO::FETCH_ASSOC);
@@ -356,8 +351,7 @@ class updater
             $this->getConnection()
                 ->prepare("INSERT INTO {$table_name}(`item`,`editable`,`value`) VALUES (?,0,?)")
                 ->execute(array('update_in_progress', 1));
-        }
-        if ($result['update_in_progress'] == 0) {
+        } elseif ($result['value'] == 0) {
             $this->getConnection()
                 ->prepare("UPDATE {$table_name} SET `value`=? WHERE `item`=?")
                 ->execute(array(1, 'update_in_progress'));
@@ -377,18 +371,7 @@ class updater
      */
     function removeMaintenanceMode()
     {
-        if (isset($_SERVER['ConfigFile']) && is_file($_SERVER['ConfigFile'])) {
-            include $_SERVER['ConfigFile'];
-        } elseif (file_exists($this->getConfigFilePath())) {
-            include $this->getConfigFilePath();
-        } else {
-            throw new \UpdateException("Error: Cannot find config file");
-        }
-        if (isset($table_prefix)) {
-            $table_name = $table_prefix . 'config';
-        } else {
-            $table_name = 'phplist_config';
-        }
+        $table_name = $this->table_prefix . 'config';
         $name = 'maintenancemode';
         $value = '';
         $sql = "UPDATE {$table_name} SET value =?, editable =? where item =? ";
