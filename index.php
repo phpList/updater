@@ -1771,8 +1771,8 @@ if (isset($_POST['action'])) {
     </div><!-- .inner -->
     </div><!-- .outer -->
 
-    <!-- Load jquery-3.3.1.min.js file -->
-    <script type="text/javascript" src="../admin/js/jquery-3.3.1.min.js"></script>
+    <!-- Load jquery-3.6.0.min.js file -->
+    <script type="text/javascript" src="../admin/js/jquery-3.6.0.min.js"></script>
 
     <!-- script for arrow animation -->
     <script type="text/javascript">
