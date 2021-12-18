@@ -424,22 +424,6 @@ class updater
     }
 
     /**
-     * Check the downloaded phpList version. Return false if it's a downgrade.
-     * @throws UpdateException
-     * @return bool
-     */
-    function checkForDowngrade()
-    {
-        $downloadedVersion = file_get_contents(self::DOWNLOAD_PATH.'/phplist/public_html/lists/admin/init.php');
-        preg_match_all('/define\(\"VERSION\",\"(.*)\"\);/', $downloadedVersion, $matches);
-
-        if (isset($matches[1][0]) && version_compare($this->getCurrentVersion(), $matches[1][0])) {
-            return true;
-        }
-        return false;
-    }
-
-    /**
      * Creates temporary dir
      * @throws UpdateException
      */
@@ -892,13 +876,6 @@ if (isset($_POST['action'])) {
             }
             break;
         case 10:
-            if ($update -> checkForDowngrade()) {
-                echo (json_encode(array('continue' => true, 'autocontinue' => true, 'response' => 'Not a downgrade!')));
-            } else {
-                echo(json_encode(array('continue' => false, 'response' => 'Downgrade is not supported.')));
-            }
-            break;
-        case 11:
             $on = $update->addMaintenanceMode();
             if ($on === false) {
                 echo(json_encode(array('continue' => false, 'response' => 'Cannot set the maintenance mode on!')));
@@ -906,7 +883,7 @@ if (isset($_POST['action'])) {
                 echo(json_encode(array('continue' => true, 'response' => 'Set maintenance mode on', 'autocontinue' => true)));
             }
             break;
-        case 12:
+        case 11:
             try {
                 $update->replacePHPEntryPoints();
                 echo(json_encode(array('continue' => true, 'response' => 'Replaced entry points', 'autocontinue' => true)));
@@ -914,7 +891,7 @@ if (isset($_POST['action'])) {
                 echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
             }
             break;
-        case 13:
+        case 12:
             try {
                 $update->movePluginsInTempFolder();
                 echo(json_encode(array('continue' => true, 'response' => 'Backing up the plugins', 'autocontinue' => true)));
@@ -922,7 +899,7 @@ if (isset($_POST['action'])) {
                 echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
             }
             break;
-        case 14:
+        case 13:
             try {
                 $update->deleteFiles();
                 echo(json_encode(array('continue' => true, 'response' => 'Old files have been deleted!', 'autocontinue' => true)));
@@ -930,7 +907,7 @@ if (isset($_POST['action'])) {
                 echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
             }
             break;
-        case 15:
+        case 14:
             try {
                 $update->moveNewFiles();
                 echo(json_encode(array('continue' => true, 'response' => 'Moved new files in place!', 'autocontinue' => true)));
@@ -939,7 +916,7 @@ if (isset($_POST['action'])) {
                 echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
             }
             break;
-        case 16:
+        case 15:
             try {
                 $update->movePluginsInPlace();
                 echo(json_encode(array('continue' => true, 'response' => 'Moved plugins in place!', 'autocontinue' => true)));
@@ -947,7 +924,7 @@ if (isset($_POST['action'])) {
                 echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
             }
             break;
-        case 17:
+        case 16:
             try {
                 $update->moveEntryPHPpoints();
                 echo(json_encode(array('continue' => true, 'response' => 'Moved new entry points in place!', 'autocontinue' => true)));
@@ -955,7 +932,7 @@ if (isset($_POST['action'])) {
                 echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
             }
             break;
-        case 18:
+        case 17:
             try {
                 $update->moveUpdater();
                 echo(json_encode(array('continue' => true, 'response' => 'Moved new entry points in place!', 'autocontinue' => true)));
@@ -963,7 +940,7 @@ if (isset($_POST['action'])) {
                 echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
             }
             break;
-        case 19:
+        case 18:
             try {
                 $update->deleteTemporaryFiles();
                 echo(json_encode(array('continue' => true, 'response' => 'Deleted temporary files!', 'autocontinue' => true)));
@@ -971,7 +948,7 @@ if (isset($_POST['action'])) {
                 echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
             }
             break;
-        case 20:
+        case 19:
             try {
                 $update->removeMaintenanceMode();
                 echo(json_encode(array('continue' => true, 'response' => 'Removed maintenance mode', 'autocontinue' => true)));
@@ -979,7 +956,7 @@ if (isset($_POST['action'])) {
                 echo(json_encode(array('continue' => false, 'response' => $e->getMessage())));
             }
             break;
-        case 21:
+        case 20:
             $writeStep = false;
             try {
                 $update->replaceNewUpdater();
@@ -1864,7 +1841,7 @@ if (isset($_POST['action'])) {
                 7: 1,
                 8: 2,
                 9: 2,
-                10: 2,
+                10: 3,
                 11: 3,
                 12: 3,
                 13: 3,
@@ -1875,7 +1852,6 @@ if (isset($_POST['action'])) {
                 18: 3,
                 19: 3,
                 20: 3,
-                21: 3,
             };
 
             let steps = document.querySelectorAll('.step-image');
