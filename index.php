@@ -83,16 +83,16 @@ class updater
      */
     public function getCurrentVersion()
     {
-        $version = file_get_contents('../admin/init.php');
-        $matches = array();
-        preg_match_all('/define\(\"VERSION\",\"(.*)\"\);/', $version, $matches);
+        $table_name = $this->table_prefix . 'config';
+        $prepStmt = $this->getConnection()->prepare("SELECT value FROM {$table_name} WHERE item=?");
+        $prepStmt->execute(['version']);
+        $result = $prepStmt->fetch(PDO::FETCH_ASSOC);
 
-        if (isset($matches[1][0])) {
-            return $matches[1][0];
+        if ($result === false) {
+            throw new UpdateException('No production version found.');
         }
 
-        throw new UpdateException('No production version found.');
-
+        return $result['value'];
     }
 
     /**
@@ -103,18 +103,25 @@ class updater
     function checkIfThereIsAnUpdate()
     {
         $serverResponse = $this->getResponseFromServer();
-        $version = isset($serverResponse['version']) ? $serverResponse['version'] : '';
 
-        $versionString = isset($serverResponse['versionstring']) ? $serverResponse['versionstring'] : '';
-        if ($version !== '' && $version !== $this->getCurrentVersion() && version_compare($this->getCurrentVersion(), $version)) {
-            $this->availableUpdate = true;
-            $updateMessage = 'Update to ' . htmlentities($versionString) . ' is available.  ';
+        if (isset($serverResponse['version']) && isset($serverResponse['versionstring'])) {
+            $version = $serverResponse['version'];
+            $versionString = $serverResponse['versionstring'];
+
+            if (version_compare($this->getCurrentVersion(), $version) < 0) {
+                $this->availableUpdate = true;
+                $updateMessage = 'Update to ' . htmlentities($versionString) . ' is available.  ';
+
+                if (isset($serverResponse['autoupdater'])
+                    && !($serverResponse['autoupdater'] === 1 || $serverResponse['autoupdater'] === '1')) {
+                    $this->availableUpdate = false;
+                    $updateMessage .= '<br />The automatic updater is disabled for this update.';
+                }
+            } else {
+                $updateMessage = 'phpList is up-to-date.';
+            }
         } else {
-            $updateMessage = 'phpList is up-to-date.';
-        }
-        if ($this->availableUpdate && isset($serverResponse['autoupdater']) && !($serverResponse['autoupdater'] === 1 || $serverResponse['autoupdater'] === '1')) {
-            $this->availableUpdate = false;
-            $updateMessage .= '<br />The automatic updater is disabled for this update.';
+            $updateMessage = 'Unable to identify new version';
         }
 
         return $updateMessage;
@@ -802,7 +809,6 @@ if (isset($_POST['action'])) {
             echo json_encode(array('status' => $statusJson, 'autocontinue' => true));
             break;
         case 1:
-            $currentVersion = $update->getCurrentVersion();
             $updateMessage = $update->checkIfThereIsAnUpdate();
             $isThereAnUpdate = $update->availableUpdate();
             if ($isThereAnUpdate === false) {
