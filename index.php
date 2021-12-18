@@ -27,6 +27,8 @@ class updater
     private $database_name;
     private $database_user;
     private $database_password;
+    private $database_port;
+    private $database_socket;
     private $table_prefix;
 
     public function __construct()
@@ -43,6 +45,8 @@ class updater
         $this->database_name = $database_name;
         $this->database_user = $database_user;
         $this->database_password = $database_password;
+        $this->database_port = isset($database_port) ? $database_port : null;
+        $this->database_socket = isset($database_socket) ? $database_socket : null;
         $this->table_prefix = isset($table_prefix) ? $table_prefix : 'phplist_';
     }
 
@@ -320,8 +324,23 @@ class updater
      */
     function getConnection()
     {
+        static $pdo = null;
+
+        if ($pdo !== null) {
+            return $pdo;
+        }
         $charset = 'utf8mb4';
-        $dsn = "mysql:host=$this->database_host;dbname=$this->database_name;charset=$charset";
+        $dsn = "mysql:dbname=$this->database_name;charset=$charset;";
+
+        if ($this->database_socket !== null) {
+            $dsn .= "socket=$this->database_socket";
+        } else {
+            $dsn .= "host=$this->database_host";
+
+            if ($this->database_port !== null) {
+                $dsn .=";port=$this->database_port";
+            }
+        }
         $options = array(
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
@@ -332,6 +351,7 @@ class updater
         } catch (\PDOException $e) {
             throw new \PDOException($e->getMessage(), (int)$e->getCode());
         }
+
         return $pdo;
     }
 
